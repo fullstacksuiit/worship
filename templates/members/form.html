@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}{% if is_edit %}Edit member{% else %}Add member{% endif %}{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <div class="mb-6">
+    <a href="{% url 'core:member_list' %}" class="inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition hover:text-slate-700">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      All members
+    </a>
+    <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+      {% if is_edit %}Edit {{ member.full_name }}{% else %}Add a member{% endif %}
+    </h1>
+  </div>
+
+  <form method="post" class="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-soft sm:p-8">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div>
+        <label class="block text-sm font-medium text-slate-700">First name</label>
+        {{ form.first_name }}
+        {{ form.first_name.errors }}
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700">Last name</label>
+        {{ form.last_name }}
+        {{ form.last_name.errors }}
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div>
+        <label class="block text-sm font-medium text-slate-700">Email</label>
+        {{ form.email }}
+        {{ form.email.errors }}
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700">Phone</label>
+        {{ form.phone }}
+        {{ form.phone.errors }}
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-slate-700">Notes</label>
+      {{ form.notes }}
+      {{ form.notes.errors }}
+    </div>
+
+    <label class="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-sm font-medium text-slate-700">
+      <input type="checkbox" name="is_active" {% if form.is_active.value %}checked{% endif %}
+             class="h-4 w-4 rounded border-slate-300 text-{{ branding.accent }}-600 focus:ring-{{ branding.accent }}-500">
+      Active member
+    </label>
+
+    <div class="flex items-center justify-end gap-3 border-t border-slate-100 pt-5">
+      <a href="{% url 'core:member_list' %}" class="text-sm font-medium text-slate-500 transition hover:text-slate-700">Cancel</a>
+      <button type="submit"
+              class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-{{ branding.accent }}-500 to-{{ branding.accent }}-600 px-5 py-2.5 text-sm font-semibold text-white shadow-soft ring-1 ring-{{ branding.accent }}-700/10 transition hover:-translate-y-0.5 hover:shadow-lg">
+        {% if is_edit %}Save changes{% else %}Add member{% endif %}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

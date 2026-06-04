@@ -1,0 +1,14 @@
+{% comment %}
+Small card-style link used on the finance overview to reach a sub-section.
+  label – heading
+  url   – url name to link to
+  desc  – one-line description
+{% endcomment %}
+<a href="{% url url %}"
+   class="group rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-soft transition hover:-translate-y-0.5 hover:border-{{ branding.accent }}-200 hover:shadow-lg">
+  <p class="flex items-center justify-between text-sm font-semibold text-slate-800">
+    {{ label }}
+    <svg class="h-4 w-4 text-slate-300 transition group-hover:text-{{ branding.accent }}-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+  </p>
+  <p class="mt-0.5 text-xs text-slate-400">{{ desc }}</p>
+</a>

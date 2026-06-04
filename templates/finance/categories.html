@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Finance categories · {{ current_org.name }}{% endblock %}
+{% block content %}
+<div>
+  <a href="{% url 'finance:overview' %}" class="inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition hover:text-slate-700">
+    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    Finance
+  </a>
+  <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Categories</h1>
+  <p class="mt-1 text-sm text-slate-500">Buckets every income and expense entry is filed under.</p>
+</div>
+
+<div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+  {% include "finance/_category_column.html" with title="Income" kind="income" accent="emerald" rows=income_categories form=income_form open_kind=open_kind %}
+  {% include "finance/_category_column.html" with title="Expense" kind="expense" accent="rose" rows=expense_categories form=expense_form open_kind=open_kind %}
+</div>
+{% endblock %}

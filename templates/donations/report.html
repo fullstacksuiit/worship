@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Reports · {{ current_org.name }}{% endblock %}
+{% block content %}
+<div class="flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Donation reports</h1>
+    <p class="mt-1 text-sm text-slate-500">Filter by date range and fund, then export.</p>
+  </div>
+  <a href="{% url 'donations:report_export' %}{% if querystring %}?{{ querystring }}{% endif %}"
+     class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
+    <svg class="h-5 w-5 text-{{ branding.accent }}-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+    Export CSV
+  </a>
+</div>
+
+<!-- Filters -->
+<form method="get" class="mt-8 flex flex-wrap items-end gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
+  <div>
+    <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500">From</label>
+    <input type="date" name="start" value="{{ filters.start|date:'Y-m-d' }}"
+           class="mt-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm shadow-sm transition focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10">
+  </div>
+  <div>
+    <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500">To</label>
+    <input type="date" name="end" value="{{ filters.end|date:'Y-m-d' }}"
+           class="mt-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm shadow-sm transition focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10">
+  </div>
+  <div>
+    <label class="block text-xs font-semibold uppercase tracking-wide text-slate-500">Fund</label>
+    <select name="fund" class="mt-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm shadow-sm transition focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10">
+      <option value="">All funds</option>
+      {% for f in funds %}
+        <option value="{{ f.pk }}" {% if filters.fund_id == f.pk %}selected{% endif %}>{{ f.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button type="submit"
+          class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-{{ branding.accent }}-500 to-{{ branding.accent }}-600 px-5 py-2.5 text-sm font-semibold text-white shadow-soft ring-1 ring-{{ branding.accent }}-700/10 transition hover:-translate-y-0.5 hover:shadow-lg">
+    Apply
+  </button>
+  {% if querystring %}
+    <a href="{% url 'donations:report' %}" class="text-sm font-medium text-slate-500 hover:text-slate-700 hover:underline">Reset</a>
+  {% endif %}
+</form>
+
+<!-- Summary cards -->
+<div class="mt-8 grid grid-cols-2 gap-5 lg:grid-cols-4">
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft transition hover:-translate-y-0.5">
+    <p class="text-sm font-medium text-slate-500">Total</p>
+    <p class="mt-2 text-3xl font-bold tracking-tight text-slate-900">{{ total }} <span class="text-lg font-semibold text-slate-400">{{ current_org.currency }}</span></p>
+  </div>
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft transition hover:-translate-y-0.5">
+    <p class="text-sm font-medium text-slate-500">Donations</p>
+    <p class="mt-2 text-3xl font-bold tracking-tight text-slate-900">{{ count }}</p>
+  </div>
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft transition hover:-translate-y-0.5">
+    <p class="text-sm font-medium text-slate-500">Average gift</p>
+    <p class="mt-2 text-3xl font-bold tracking-tight text-slate-900">{{ average|floatformat:2 }} <span class="text-lg font-semibold text-slate-400">{{ current_org.currency }}</span></p>
+  </div>
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft transition hover:-translate-y-0.5">
+    <p class="text-sm font-medium text-slate-500">Members who gave</p>
+    <p class="mt-2 text-3xl font-bold tracking-tight text-slate-900">{{ member_donors }}</p>
+  </div>
+</div>
+
+<div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+  <!-- By fund -->
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">By fund</h2>
+    <table class="mt-4 min-w-full text-sm">
+      <tbody class="divide-y divide-slate-100">
+        {% for row in by_fund %}
+          <tr>
+            <td class="py-2.5 text-slate-700"><span class="mr-2 inline-block h-2 w-2 rounded-full bg-{{ branding.accent }}-400"></span>{{ row.fund__name }}</td>
+            <td class="py-2.5 text-right text-slate-400">{{ row.count }}</td>
+            <td class="py-2.5 text-right font-semibold text-slate-900">{{ row.total }} {{ current_org.currency }}</td>
+          </tr>
+        {% empty %}
+          <tr><td class="py-6 text-center text-slate-400">No data for this filter.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- By method -->
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">By payment method</h2>
+    <table class="mt-4 min-w-full text-sm">
+      <tbody class="divide-y divide-slate-100">
+        {% for row in by_method %}
+          <tr>
+            <td class="py-2.5"><span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{{ row.label }}</span></td>
+            <td class="py-2.5 text-right text-slate-400">{{ row.count }}</td>
+            <td class="py-2.5 text-right font-semibold text-slate-900">{{ row.total }} {{ current_org.currency }}</td>
+          </tr>
+        {% empty %}
+          <tr><td class="py-6 text-center text-slate-400">No data for this filter.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Monthly trend -->
+<div class="mt-8 rounded-2xl border border-slate-200 bg-white shadow-soft">
+  <h2 class="border-b border-slate-100 px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">Monthly</h2>
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-sm">
+      <thead class="text-left text-xs uppercase tracking-wide text-slate-400">
+        <tr>
+          <th class="px-6 py-3 font-medium">Month</th>
+          <th class="px-6 py-3 text-right font-medium">Donations</th>
+          <th class="px-6 py-3 text-right font-medium">Total</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for row in by_month %}
+          <tr class="transition hover:bg-slate-50/70">
+            <td class="px-6 py-3 text-slate-700">{{ row.month|date:"M Y" }}</td>
+            <td class="px-6 py-3 text-right text-slate-400">{{ row.count }}</td>
+            <td class="px-6 py-3 text-right font-semibold text-slate-900">{{ row.total }} {{ current_org.currency }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="3" class="px-6 py-12 text-center text-slate-400">No donations match these filters.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

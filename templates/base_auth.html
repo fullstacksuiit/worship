@@ -1,0 +1,104 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Worship{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+  <link rel="apple-touch-icon" href="{% static 'favicon.svg' %}">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
+          boxShadow: { soft: '0 1px 2px 0 rgb(15 23 42 / 0.04), 0 18px 40px -20px rgb(15 23 42 / 0.25)' },
+        },
+      },
+    }
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-full bg-white font-sans text-slate-800 antialiased">
+  <div class="grid min-h-screen lg:grid-cols-2">
+
+    <!-- Brand panel (desktop only) -->
+    <aside class="relative hidden overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 p-12 lg:flex lg:flex-col lg:justify-between">
+      <div aria-hidden="true" class="pointer-events-none absolute inset-0">
+        <div class="absolute -right-20 -top-20 h-80 w-80 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-teal-300/20 blur-3xl"></div>
+      </div>
+
+      <a href="{% url 'core:landing' %}" class="relative flex items-center gap-2.5 text-white">
+        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 text-white ring-1 ring-white/20 backdrop-blur">
+          {% include "_logo.html" with class="h-6 w-6" %}
+        </span>
+        <span class="text-lg font-bold tracking-tight">Worship</span>
+      </a>
+
+      <div class="relative max-w-md">
+        <h2 class="text-3xl font-bold leading-tight text-white">{% block panel_title %}Manage your community's giving with grace.{% endblock %}</h2>
+        <ul class="mt-8 space-y-4 text-emerald-50">
+          {% block panel_points %}
+          <li class="flex items-start gap-3">
+            <svg class="mt-0.5 h-5 w-5 flex-none text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Automatic receipts for every donation
+          </li>
+          <li class="flex items-start gap-3">
+            <svg class="mt-0.5 h-5 w-5 flex-none text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Member directory with giving history
+          </li>
+          <li class="flex items-start gap-3">
+            <svg class="mt-0.5 h-5 w-5 flex-none text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Reports &amp; CSV export, ready for your accountant
+          </li>
+          {% endblock %}
+        </ul>
+      </div>
+
+      <div class="relative flex gap-2 text-sm text-emerald-100">
+        <span class="rounded-full bg-white/10 px-3 py-1 ring-1 ring-white/15">🕌 Mosque</span>
+        <span class="rounded-full bg-white/10 px-3 py-1 ring-1 ring-white/15">🛕 Mandir</span>
+        <span class="rounded-full bg-white/10 px-3 py-1 ring-1 ring-white/15">⛪ Church</span>
+        <span class="rounded-full bg-white/10 px-3 py-1 ring-1 ring-white/15">🪯 Gurudwara</span>
+      </div>
+    </aside>
+
+    <!-- Form column -->
+    <main class="flex flex-col px-6 py-8 sm:px-12">
+      <div class="flex items-center justify-between">
+        <a href="{% url 'core:landing' %}" class="flex items-center gap-2 lg:hidden">
+          <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-sm ring-1 ring-black/5">
+            {% include "_logo.html" with class="h-5 w-5" %}
+          </span>
+          <span class="font-bold tracking-tight text-slate-900">Worship</span>
+        </a>
+        <a href="{% url 'core:landing' %}" class="ml-auto inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition hover:text-slate-700">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          Home
+        </a>
+      </div>
+
+      <div class="flex flex-1 items-center justify-center py-8">
+        <div class="w-full {% block form_width %}max-w-md{% endblock %}">
+          {% if messages %}
+            <div class="mb-6 space-y-2">
+              {% for message in messages %}
+                <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+          {% block auth %}{% endblock %}
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

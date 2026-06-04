@@ -1,0 +1,16 @@
+{% comment %}
+Worship brand mark — a flame of devotion.
+
+The flame is the light common to every tradition the product serves: the diya,
+the candle, the oil lamp, the akhand jyot. Rendered with `currentColor` so the
+enclosing tile controls the colour (white on the gradient tile, etc.).
+
+Usage:
+  {% include "_logo.html" with class="h-5 w-5" %}
+{% endcomment %}
+<svg viewBox="0 0 32 32" fill="none" class="{{ class|default:'h-5 w-5' }}" aria-hidden="true">
+  <path d="M16 2.75c.55 4.2 2.4 6.1 4 8 1.9 2.25 3.5 4.6 3.5 8.05a7.5 7.5 0 1 1-15 0c0-2.1.78-3.7 1.9-5.2.2 1.45 1.05 2.4 2.2 2.6-1.1-3.4-.05-7.6 3.4-13.45Z"
+        fill="currentColor"/>
+  <path d="M16 14.5c1.45 2.1 2.9 3.6 2.9 6a2.9 2.9 0 1 1-5.8 0c0-1.55.6-2.7 1.45-3.9.95 1 1.45.55 1.45-2.1Z"
+        fill="currentColor" fill-opacity="0.35"/>
+</svg>
