@@ -99,7 +99,7 @@
       <div class="reveal is-in flex justify-center">
         <a href="{% url 'core:signup' %}" class="group inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-4 py-1.5 text-sm font-medium text-slate-600 shadow-sm backdrop-blur transition hover:border-slate-300">
           <span class="flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-          For mosques, mandirs, churches &amp; gurudwaras
+          For mosques, mandirs, churches, gurudwaras &amp; more
           <svg class="h-3.5 w-3.5 text-slate-400 transition group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
       </div>
@@ -234,14 +234,19 @@
         <p class="mt-4 text-lg text-slate-500">Labels, terminology, and accent colour adapt automatically.</p>
       </div>
       <div class="mt-14 grid grid-cols-2 gap-5 sm:grid-cols-4">
-        {% for icon, name in faiths %}
-          <div class="reveal rounded-3xl border border-slate-200 bg-white p-8 transition hover:-translate-y-1.5 hover:shadow-soft"
+        {% for f in faiths %}
+          <div class="reveal flex flex-col items-center rounded-3xl border border-slate-200 bg-white p-8 transition hover:-translate-y-1.5 hover:shadow-soft"
                style="transition-delay:{{ forloop.counter0 }}00ms">
-            <div class="text-5xl">{{ icon }}</div>
-            <p class="mt-4 font-display text-lg font-bold text-slate-800">{{ name }}</p>
+            <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-{{ f.accent }}-50 text-{{ f.accent }}-600">
+              <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z"/>
+              </svg>
+            </span>
+            <p class="mt-4 font-display text-lg font-bold text-slate-800">{{ f.place }}</p>
           </div>
         {% endfor %}
       </div>
+      <p class="reveal mt-10 text-sm text-slate-400">Every tradition is treated equally — labels, terminology, and accent colour simply adapt to yours.</p>
     </div>
   </section>
 

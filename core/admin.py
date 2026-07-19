@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Member, Organization, UserOrgMembership
+from .models import Member, MembershipLevel, Organization, UserOrgMembership
 
 
 @admin.register(Organization)
@@ -11,12 +11,21 @@ class OrganizationAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("name",)}
 
 
+@admin.register(MembershipLevel)
+class MembershipLevelAdmin(admin.ModelAdmin):
+    list_display = ("name", "code", "organization", "order", "is_active")
+    list_filter = ("organization", "is_active")
+    search_fields = ("name", "code")
+    list_select_related = ("organization",)
+
+
 @admin.register(Member)
 class MemberAdmin(admin.ModelAdmin):
-    list_display = ("full_name", "organization", "email", "phone", "is_active")
-    list_filter = ("organization", "is_active")
+    list_display = ("full_name", "organization", "level", "email", "phone", "is_active")
+    list_filter = ("organization", "level", "is_active")
     search_fields = ("first_name", "last_name", "email", "phone")
-    list_select_related = ("organization",)
+    list_select_related = ("organization", "level")
+    autocomplete_fields = ("level",)
 
 
 @admin.register(UserOrgMembership)

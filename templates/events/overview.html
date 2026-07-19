@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Events · {{ current_org.name }}{% endblock %}
+{% block content %}
+<div class="flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Events &amp; services</h1>
+    <p class="mt-1 text-sm text-slate-500">{{ current_org.name }}'s schedule — services, festivals, classes and meetings, with attendance.</p>
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    {% if total_events %}
+    <a href="{% url 'events:schedule' %}"
+       class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+      Full schedule
+    </a>
+    {% endif %}
+    <a href="{% url 'events:event_create' %}"
+       class="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-{{ branding.accent }}-500 to-{{ branding.accent }}-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-soft ring-1 ring-{{ branding.accent }}-700/10 transition hover:-translate-y-0.5 hover:shadow-lg">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      Add event
+    </a>
+  </div>
+</div>
+
+<!-- Headline figures -->
+<div class="mt-8 grid grid-cols-2 gap-5 lg:grid-cols-4">
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
+    <p class="text-sm font-medium text-slate-500">Upcoming</p>
+    <p class="mt-2 text-3xl font-bold tracking-tight text-slate-900">{{ upcoming_count }}</p>
+    <p class="mt-2 text-xs text-slate-400">Scheduled ahead</p>
+  </div>
+  <div class="rounded-2xl border bg-white p-6 shadow-soft {% if this_week_count %}border-{{ branding.accent }}-200{% else %}border-slate-200{% endif %}">
+    <p class="text-sm font-medium text-slate-500">This week</p>
+    <p class="mt-2 text-3xl font-bold tracking-tight text-{{ branding.accent }}-600">{{ this_week_count }}</p>
+    <p class="mt-2 text-xs text-slate-400">In the next 7 days</p>
+  </div>
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
+    <p class="text-sm font-medium text-slate-500">Gatherings in {{ year }}</p>
+    <p class="mt-2 text-3xl font-bold tracking-tight text-slate-900">{{ events_this_year }}</p>
+    <p class="mt-2 text-xs text-slate-400">Held &amp; planned this year</p>
+  </div>
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
+    <p class="text-sm font-medium text-slate-500">Avg attendance</p>
+    <p class="mt-2 text-3xl font-bold tracking-tight text-emerald-600">{{ attendance_avg }}</p>
+    <p class="mt-2 text-xs text-slate-400">{{ attendance_total }} across {{ attendance_counted }} counted</p>
+  </div>
+</div>
+
+{% if suggestions %}
+<!-- Empty-schedule quick start: faith-aware one-click services -->
+<div class="mt-8 rounded-2xl border border-{{ branding.accent }}-200 bg-{{ branding.accent }}-50/50 p-6 shadow-soft sm:p-8">
+  <div class="flex items-start gap-4">
+    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-{{ branding.accent }}-50 text-{{ branding.accent }}-600 ring-1 ring-{{ branding.accent }}-100">
+      <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    </span>
+    <div class="min-w-0 flex-1">
+      <h2 class="text-lg font-bold tracking-tight text-slate-900">Set up your schedule in one click</h2>
+      <p class="mt-1 text-sm text-slate-600">Common gatherings for a {{ branding.place|lower }} — we'll pre-fill the next sensible date and time, you just confirm.</p>
+      <div class="mt-5 grid gap-3 sm:grid-cols-2">
+        {% for s in suggestions %}
+        <a href="{{ s.url }}"
+           class="group flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-{{ branding.accent }}-300 hover:shadow-md">
+          <span class="min-w-0">
+            <span class="block truncate font-semibold text-slate-800">{{ s.title }}</span>
+            <span class="block text-xs text-slate-400">{{ s.kind_label }} · next {{ s.when|date:"D j M, H:i" }}</span>
+          </span>
+          <svg class="h-5 w-5 shrink-0 text-slate-300 transition group-hover:text-{{ branding.accent }}-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        </a>
+        {% endfor %}
+      </div>
+      <a href="{% url 'events:event_create' %}" class="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-slate-500 transition hover:text-slate-700">
+        Or add a custom event
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if awaiting %}
+<!-- Past gatherings still missing a headcount -->
+<div class="mt-8 overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-soft">
+  <h2 class="flex items-center gap-2 border-b border-amber-100 bg-amber-50/60 px-6 py-4 text-xs font-semibold uppercase tracking-wide text-amber-700">
+    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    Attendance to record
+  </h2>
+  <ul class="divide-y divide-slate-100">
+    {% for e in awaiting %}
+    <li class="flex flex-wrap items-center gap-x-4 gap-y-3 px-6 py-4">
+      <div class="min-w-0 flex-1">
+        <a href="{% url 'events:event_detail' e.pk %}" class="font-semibold text-slate-800 hover:text-{{ branding.accent }}-700">{{ e.title }}</a>
+        <p class="text-xs text-slate-400">{{ e.starts_at|date:"D j M Y, H:i" }}{% if e.location %} · {{ e.location }}{% endif %}</p>
+      </div>
+      <form method="post" action="{% url 'events:record_attendance' e.pk %}" class="flex items-center gap-2">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="overview">
+        <input type="number" name="attendance" min="0" required placeholder="Headcount"
+               class="w-32 field-control border px-3 py-2 text-sm shadow-sm">
+        <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-slate-700">
+          Save
+        </button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if total_events %}
+<!-- Coming up -->
+<div class="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft">
+  <h2 class="flex items-center justify-between border-b border-slate-100 px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+    Coming up
+    <a href="{% url 'events:schedule' %}" class="font-medium normal-case text-{{ branding.accent }}-600 hover:underline">Full schedule →</a>
+  </h2>
+  <ul class="divide-y divide-slate-100">
+    {% for e in upcoming %}
+    <li class="flex items-center gap-4 px-6 py-4 transition hover:bg-slate-50/70">
+      <!-- Date chip -->
+      <div class="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-center {% if e.is_today %}border-{{ branding.accent }}-300 bg-{{ branding.accent }}-50{% endif %}">
+        <span class="text-[10px] font-semibold uppercase tracking-wide {% if e.is_today %}text-{{ branding.accent }}-600{% else %}text-slate-400{% endif %}">{{ e.starts_at|date:"M" }}</span>
+        <span class="text-xl font-bold leading-none text-slate-900">{{ e.starts_at|date:"j" }}</span>
+      </div>
+      <div class="min-w-0 flex-1">
+        <a href="{% url 'events:event_detail' e.pk %}" class="font-semibold text-slate-800 hover:text-{{ branding.accent }}-700">{{ e.title }}</a>
+        {% include "events/_meta.html" with e=e %}
+      </div>
+      <span class="hidden shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500 sm:inline-flex">{{ e.get_kind_display }}</span>
+    </li>
+    {% empty %}
+    <li class="px-6 py-12 text-center text-sm text-slate-400">No upcoming events. <a href="{% url 'events:event_create' %}" class="font-semibold text-{{ branding.accent }}-600 hover:underline">Add one →</a></li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endblock %}

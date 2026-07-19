@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}{% if is_edit %}Edit receipt #{{ payment.receipt_number }}{% else %}Record rent{% endif %}{% if unit %} · {{ unit.name }}{% endif %}{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <div class="mb-6">
+    {% if unit %}
+    <a href="{% url 'rentals:unit_detail' unit.pk %}" class="inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition hover:text-slate-700">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      {{ unit.name }}
+    </a>
+    {% else %}
+    <a href="{% url 'rentals:overview' %}" class="inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition hover:text-slate-700">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      Rentals
+    </a>
+    {% endif %}
+    <div class="mt-2 flex items-center gap-3">
+      <span class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-emerald-700">Rent</span>
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{% if is_edit %}Edit receipt #{{ payment.receipt_number }}{% else %}Record rent{% endif %}</h1>
+    </div>
+    <p class="mt-1 text-sm text-slate-500">{% if is_edit %}Correcting this receipt for {{ unit.name }} also updates the matching entry in your finance ledger.{% elif unit %}From {{ unit.tenant_name|default:unit.name }} for {{ unit.name }}. A receipt number is assigned automatically and the amount is posted to your finance ledger as income.{% else %}Choose who the rent is from, then record it. A receipt number is assigned automatically and the amount is posted to your finance ledger as income.{% endif %}</p>
+  </div>
+
+  <form method="post" class="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-soft sm:p-8">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <section class="space-y-4">
+      {% include "_field_section.html" with label="Period & amount" icon="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" %}
+      {% if not is_edit and unit and in_arrears %}
+      <div class="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <svg class="mt-0.5 h-4 w-4 flex-none text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        <span>{{ unit.name }} is <strong>{{ balance }} {{ unit.currency }}</strong> in arrears · {{ months_due }} month{{ months_due|pluralize }} due. This receipt is set to the oldest unpaid month — change it below if you're collecting a different one.</span>
+      </div>
+      {% endif %}
+      {% if form.unit %}
+      <div>
+        <label class="block text-sm font-medium text-slate-700">From (unit / tenant)</label>
+        {{ form.unit }}
+        {{ form.unit.errors }}
+      </div>
+      {% endif %}
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+        <div>
+          <label class="block text-sm font-medium text-slate-700">For month</label>
+          {{ form.period_month }}
+          {{ form.period_month.errors }}
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700">Year</label>
+          {{ form.period_year }}
+          {{ form.period_year.errors }}
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700">Amount</label>
+          <div class="relative mt-1">
+            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm font-semibold text-slate-400">{{ current_org.currency }}</span>
+            {{ form.amount }}
+          </div>
+          {{ form.amount.errors }}
+        </div>
+      </div>
+    </section>
+
+    <section class="space-y-4 border-t border-slate-100 pt-6">
+      {% include "_field_section.html" with label="Payment" icon="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" %}
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+        <div>
+          <label class="block text-sm font-medium text-slate-700">Method</label>
+          {{ form.method }}
+          {{ form.method.errors }}
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700">Paid on</label>
+          {{ form.paid_on }}
+          {{ form.paid_on.errors }}
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700">Reference <span class="font-normal text-slate-400">· optional</span></label>
+          {{ form.reference }}
+          {{ form.reference.errors }}
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700">Note <span class="font-normal text-slate-400">· optional</span></label>
+        {{ form.note }}
+        {{ form.note.errors }}
+      </div>
+    </section>
+
+    <div class="flex items-center justify-end gap-3 border-t border-slate-100 pt-5">
+      <a href="{% if unit %}{% url 'rentals:unit_detail' unit.pk %}{% else %}{% url 'rentals:overview' %}{% endif %}" class="text-sm font-medium text-slate-500 transition hover:text-slate-700">Cancel</a>
+      <button type="submit"
+              class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-{{ branding.accent }}-500 to-{{ branding.accent }}-600 px-5 py-2.5 text-sm font-semibold text-white shadow-soft ring-1 ring-{{ branding.accent }}-700/10 transition hover:-translate-y-0.5 hover:shadow-lg">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        {% if is_edit %}Save changes{% else %}Save receipt{% endif %}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

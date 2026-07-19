@@ -1,0 +1,47 @@
+<!-- Tailwind Play CDN + shared design tokens. The runtime JIT generates utility
+     classes (incl. dynamic faith accents like bg-emerald-700) by scanning the
+     page's DOM, so no build step is needed. Included by base.html and
+     base_auth.html so the app and auth shells share one warm, tactile system. -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        },
+        // Remap the neutral scale from cold blue-grey (slate) to a warm sand/taupe.
+        // Because every existing `slate-*` utility across the app resolves through
+        // this, the whole product warms up in one place — no template churn.
+        colors: {
+          slate: {
+            50:  '#faf8f4',
+            100: '#f4f0e9',
+            200: '#e9e2d7',
+            300: '#d9cfc0',
+            400: '#b3a897',
+            500: '#8a7f6f',
+            600: '#6e6356',
+            700: '#524a40',
+            800: '#38322b',
+            900: '#241f19',
+            950: '#17120d',
+          },
+        },
+        // Warm, layered shadows with a subtle inset top-highlight so cards feel
+        // tactile and lit rather than flat.
+        boxShadow: {
+          soft: '0 1px 2px 0 rgb(65 50 35 / 0.05), 0 12px 30px -14px rgb(65 50 35 / 0.18)',
+          card: '0 1px 0 0 rgb(255 255 255 / 0.7) inset, 0 1px 2px rgb(65 50 35 / 0.05), 0 14px 34px -16px rgb(65 50 35 / 0.20)',
+        },
+        // Slightly more generous radii for a friendlier, softer feel.
+        borderRadius: {
+          lg: '0.625rem',
+          xl: '0.85rem',
+          '2xl': '1.15rem',
+          '3xl': '1.6rem',
+        },
+      },
+    },
+  }
+</script>

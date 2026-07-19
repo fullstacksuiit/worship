@@ -10,18 +10,18 @@
     <form method="get" class="flex items-center gap-2">
       <label class="text-xs font-semibold uppercase tracking-wide text-slate-400">Year</label>
       <select name="year" onchange="this.form.submit()"
-              class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10">
+              class="field-control border px-3 py-2 text-sm shadow-sm">
         {% for y in years %}
           <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
         {% endfor %}
       </select>
     </form>
-    <a href="{% url 'finance:income_create' %}"
+    <a href="{% url 'donations:income_create' %}"
        class="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm font-semibold text-emerald-700 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
       Income
     </a>
-    <a href="{% url 'finance:expense_create' %}"
+    <a href="{% url 'donations:expense_create' %}"
        class="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-sm font-semibold text-rose-700 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
       Expense
@@ -50,10 +50,10 @@
 
 <!-- Quick links to the rest of the finance area -->
 <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-  {% include "finance/_hublink.html" with label="Ledger" url="finance:transactions" desc="All entries" %}
-  {% include "finance/_hublink.html" with label="Budgets" url="finance:budgets" desc="Plan vs actual" %}
-  {% include "finance/_hublink.html" with label="Pledges" url="finance:pledges" desc="Member commitments" %}
-  {% include "finance/_hublink.html" with label="Categories" url="finance:categories" desc="Income & expense buckets" %}
+  {% include "finance/_hublink.html" with label="Ledger" url="donations:transactions" desc="All entries" %}
+  {% include "finance/_hublink.html" with label="Budgets" url="donations:budgets" desc="Plan vs actual" %}
+  {% include "finance/_hublink.html" with label="Pledges" url="donations:pledges" desc="Member commitments" %}
+  {% include "finance/_hublink.html" with label="Categories" url="donations:categories" desc="Income & expense buckets" %}
 </div>
 
 <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -78,7 +78,7 @@
   <div class="rounded-2xl border border-slate-200 bg-white shadow-soft lg:col-span-2">
     <h2 class="flex items-center justify-between border-b border-slate-100 px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
       Recent activity
-      <a href="{% url 'finance:transactions' %}" class="font-medium normal-case text-{{ branding.accent }}-600 hover:underline">View ledger →</a>
+      <a href="{% url 'donations:transactions' %}" class="font-medium normal-case text-{{ branding.accent }}-600 hover:underline">View ledger →</a>
     </h2>
     <div class="overflow-x-auto">
       <table class="min-w-full text-sm">

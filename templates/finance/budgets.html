@@ -2,7 +2,7 @@
 {% block title %}Budgets · {{ current_org.name }}{% endblock %}
 {% block content %}
 <div>
-  <a href="{% url 'finance:overview' %}" class="inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition hover:text-slate-700">
+  <a href="{% url 'donations:overview' %}" class="inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition hover:text-slate-700">
     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
     Finance
   </a>
@@ -44,7 +44,7 @@
         <button type="submit" class="w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700">Save budget</button>
       </form>
     {% else %}
-      <p class="mt-4 text-sm text-slate-500">Add a <a href="{% url 'finance:categories' %}" class="font-medium text-{{ branding.accent }}-600 hover:underline">category</a> first.</p>
+      <p class="mt-4 text-sm text-slate-500">Add a <a href="{% url 'donations:categories' %}" class="font-medium text-{{ branding.accent }}-600 hover:underline">category</a> first.</p>
     {% endif %}
   </div>
 

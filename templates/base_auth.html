@@ -12,21 +12,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
-          boxShadow: { soft: '0 1px 2px 0 rgb(15 23 42 / 0.04), 0 18px 40px -20px rgb(15 23 42 / 0.25)' },
-        },
-      },
-    }
-  </script>
+  {% include "_tailwind_config.html" %}
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style>[x-cloak]{display:none!important}</style>
+  {% include "_field_styles.html" %}
 </head>
-<body class="min-h-full bg-white font-sans text-slate-800 antialiased">
+<body class="min-h-full bg-white font-sans text-slate-800 antialiased"
+      style="--accent: #059669; --accent-strong: #047857; --accent-soft: #d1fae5; --accent-ring: #a7f3d0;">
   <div class="grid min-h-screen lg:grid-cols-2">
 
     <!-- Brand panel (desktop only) -->
@@ -63,11 +55,15 @@
         </ul>
       </div>
 
-      <div class="relative flex gap-2 text-sm text-emerald-100">
+      <div class="relative flex flex-wrap gap-2 text-sm text-emerald-100">
         <span class="rounded-full bg-white/10 px-3 py-1 ring-1 ring-white/15">🕌 Mosque</span>
         <span class="rounded-full bg-white/10 px-3 py-1 ring-1 ring-white/15">🛕 Mandir</span>
         <span class="rounded-full bg-white/10 px-3 py-1 ring-1 ring-white/15">⛪ Church</span>
         <span class="rounded-full bg-white/10 px-3 py-1 ring-1 ring-white/15">🪯 Gurudwara</span>
+        <span class="rounded-full bg-white/10 px-3 py-1 ring-1 ring-white/15">☸️ Temple</span>
+        <span class="rounded-full bg-white/10 px-3 py-1 ring-1 ring-white/15">🕍 Synagogue</span>
+        <span class="rounded-full bg-white/10 px-3 py-1 ring-1 ring-white/15">🛕 Derasar</span>
+        <span class="rounded-full bg-white/10 px-3 py-1 ring-1 ring-white/15">⭐ Bahá'í</span>
       </div>
     </aside>
 

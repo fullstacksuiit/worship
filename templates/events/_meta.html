@@ -1,0 +1,11 @@
+{% comment %}One-line meta for an event row: time, location, lead, and a repeat badge.
+Expects `e` (an Event) in context.{% endcomment %}
+<p class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-400">
+  <span class="inline-flex items-center gap-1 text-slate-500">
+    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    {{ e.starts_at|date:"H:i" }}{% if e.ends_at %}–{{ e.ends_at|date:"H:i" }}{% endif %}
+  </span>
+  {% if e.location %}<span>·</span><span>{{ e.location }}</span>{% endif %}
+  {% if e.lead %}<span>·</span><span>led by {{ e.lead.full_name }}</span>{% endif %}
+  {% if e.repeats %}<span>·</span><span class="inline-flex items-center gap-1 font-medium text-slate-500"><svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>{{ e.get_recurrence_display|lower }}</span>{% endif %}
+</p>

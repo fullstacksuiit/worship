@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-%96pk!@(qcjj^*&_wd8!ag=%3rzt_$&o8^x4y$s*vq2f%7342o"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
 
@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     # Local apps
     "core",
     "donations",
-    "finance",
+    "rentals",
+    "events",
     "billing",
 ]
 
@@ -70,6 +71,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "core.context_processors.organization",
+                "billing.context_processors.billing",
             ],
         },
     },

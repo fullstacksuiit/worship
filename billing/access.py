@@ -1,11 +1,13 @@
 """View-level entitlement checks. The SubscriptionMiddleware attaches
 `request.subscription`; these helpers turn it into yes/no decisions about
 modules and limits. Kept explicit (opt-in per view/action) rather than a global
-redirect, since the app has no billing UI to redirect to yet."""
+redirect."""
 
 from functools import wraps
 
+from django.contrib import messages
 from django.core.exceptions import PermissionDenied
+from django.shortcuts import redirect
 
 
 def has_feature(request, feature):
@@ -25,6 +27,28 @@ def feature_required(feature):
                 raise PermissionDenied(
                     f"Your plan does not include the '{feature}' module."
                 )
+            return view_func(request, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def feature_gate(feature, label=None):
+    """User-facing module gate for nav-reachable pages: instead of a bare 403,
+    redirect to the pricing page with an explanatory message inviting an upgrade.
+    Use `feature_required` for strict/non-navigable endpoints."""
+
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            if not has_feature(request, feature):
+                messages.info(
+                    request,
+                    f"{label or feature.title()} is available on a higher plan — "
+                    "upgrade to unlock it.",
+                )
+                return redirect("billing:plans")
             return view_func(request, *args, **kwargs)
 
         return wrapper

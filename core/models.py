@@ -10,6 +10,10 @@ class FaithTradition(models.TextChoices):
     HINDUISM = "hinduism", "Mandir (Hinduism)"
     CHRISTIANITY = "christianity", "Church (Christianity)"
     SIKHISM = "sikhism", "Gurudwara (Sikhism)"
+    BUDDHISM = "buddhism", "Temple (Buddhism)"
+    JUDAISM = "judaism", "Synagogue (Judaism)"
+    JAINISM = "jainism", "Derasar (Jainism)"
+    BAHAI = "bahai", "Bahá'í House of Worship"
 
 
 class Organization(models.Model):
@@ -73,6 +77,101 @@ class TenantScopedModel(models.Model):
         abstract = True
 
 
+# Suggested membership levels (congregation/committee standing) to seed for each
+# faith. Each entry is (code, name) and is listed in rank order — "General" is the
+# everyday member every tradition shares; the rest are common leadership/office
+# titles. These are starting points an org can rename, reorder, or disable; the
+# model imposes no faith-specific rules.
+DEFAULT_MEMBERSHIP_LEVELS = {
+    FaithTradition.ISLAM: [
+        ("general", "General"),
+        ("sadar", "Sadar (President)"),
+        ("imam", "Imam"),
+        ("mutawalli", "Mutawalli (Trustee)"),
+        ("secretary", "Secretary"),
+        ("treasurer", "Treasurer"),
+    ],
+    FaithTradition.HINDUISM: [
+        ("general", "General"),
+        ("pradhan", "Pradhan (President)"),
+        ("pujari", "Pujari (Priest)"),
+        ("trustee", "Trustee"),
+        ("secretary", "Secretary"),
+        ("treasurer", "Treasurer"),
+    ],
+    FaithTradition.CHRISTIANITY: [
+        ("general", "General"),
+        ("pastor", "Pastor"),
+        ("elder", "Elder"),
+        ("deacon", "Deacon"),
+        ("secretary", "Secretary"),
+        ("treasurer", "Treasurer"),
+    ],
+    FaithTradition.SIKHISM: [
+        ("general", "General"),
+        ("pradhan", "Pradhan (President)"),
+        ("granthi", "Granthi"),
+        ("sevadar", "Sevadar"),
+        ("secretary", "Secretary"),
+        ("treasurer", "Treasurer"),
+    ],
+    FaithTradition.BUDDHISM: [
+        ("general", "General"),
+        ("abbot", "Abbot"),
+        ("bhikkhu", "Bhikkhu (Monk)"),
+        ("lay_leader", "Lay Leader"),
+        ("secretary", "Secretary"),
+        ("treasurer", "Treasurer"),
+    ],
+    FaithTradition.JUDAISM: [
+        ("general", "General"),
+        ("president", "President"),
+        ("rabbi", "Rabbi"),
+        ("cantor", "Cantor"),
+        ("gabbai", "Gabbai"),
+        ("secretary", "Secretary"),
+        ("treasurer", "Treasurer"),
+    ],
+    FaithTradition.JAINISM: [
+        ("general", "General"),
+        ("president", "President"),
+        ("pujari", "Pujari (Priest)"),
+        ("trustee", "Trustee"),
+        ("secretary", "Secretary"),
+        ("treasurer", "Treasurer"),
+    ],
+    FaithTradition.BAHAI: [
+        ("general", "General"),
+        ("chair", "Assembly Chair"),
+        ("secretary", "Secretary"),
+        ("treasurer", "Treasurer"),
+    ],
+}
+
+
+class MembershipLevel(TenantScopedModel):
+    """A member's standing within the organization (e.g. General, Sadar, Pastor).
+    The titles vary by faith — see DEFAULT_MEMBERSHIP_LEVELS — and each org keeps
+    and edits its own set. `order` gives them a sensible rank for display."""
+
+    code = models.SlugField(max_length=40)
+    name = models.CharField(max_length=120)
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["order", "name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "code"],
+                name="unique_membership_level_code_per_org",
+            ),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
 class Member(TenantScopedModel):
     """A person associated with an organization — congregant, donor, or both.
     Donations may reference a Member, or stand alone for walk-in/anonymous gifts."""
@@ -81,6 +180,15 @@ class Member(TenantScopedModel):
     last_name = models.CharField(max_length=100, blank=True)
     email = models.EmailField(blank=True)
     phone = models.CharField(max_length=40, blank=True)
+    # Standing within the org (faith-aware). Optional, and kept if the level is
+    # later deleted would orphan it — so SET_NULL rather than CASCADE.
+    level = models.ForeignKey(
+        MembershipLevel,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="members",
+    )
     notes = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
 
@@ -104,10 +212,16 @@ class Member(TenantScopedModel):
 
 
 class OrgRole(models.TextChoices):
+    """A login's role within one organization — what they're allowed to do.
+    Owner is the org's main superuser (created at signup); the rest are team
+    members the Owner/Admins add. See core.permissions for the capability each
+    role grants."""
+
     OWNER = "owner", "Owner"
     ADMIN = "admin", "Administrator"
     TREASURER = "treasurer", "Treasurer"
-    STAFF = "staff", "Staff"
+    ACCOUNTANT = "accountant", "Accountant"
+    STAFF = "staff", "General Member"
 
 
 class UserOrgMembership(models.Model):
@@ -132,6 +246,11 @@ class UserOrgMembership(models.Model):
         default=False,
         help_text="The org this user lands on at login when they have several.",
     )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Deactivated members keep their history but lose access to "
+        "this organization until reactivated.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -141,6 +260,14 @@ class UserOrgMembership(models.Model):
                 name="unique_user_per_org",
             ),
         ]
+
+    @property
+    def role_label(self):
+        return OrgRole(self.role).label
+
+    @property
+    def is_owner(self):
+        return self.role == OrgRole.OWNER
 
     def __str__(self):
         return f"{self.user} @ {self.organization} ({self.role})"

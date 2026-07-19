@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% block title %}{{ unit.name }} · {{ current_org.name }}{% endblock %}
+{% block content %}
+<div class="mb-6">
+  <a href="{% url 'rentals:overview' %}" class="inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition hover:text-slate-700">
+    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    Rentals
+  </a>
+</div>
+
+<div class="flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <div class="flex items-center gap-3">
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{{ unit.name }}</h1>
+      {% if unit.property_type %}
+        <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-slate-600">
+          {% if unit.property_type.icon %}<span>{{ unit.property_type.icon }}</span>{% endif %}{{ unit.property_type.name }}
+        </span>
+      {% endif %}
+      {% if unit.is_active %}
+        <span class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-emerald-700">Active</span>
+      {% else %}
+        <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-slate-500">Inactive</span>
+      {% endif %}
+    </div>
+    <p class="mt-1 text-sm text-slate-500">
+      {{ unit.tenant_name|default:"No tenant recorded" }}{% if unit.tenant_phone %} · {{ unit.tenant_phone }}{% endif %}
+      {% if unit.description %} · {{ unit.description }}{% endif %}
+    </p>
+  </div>
+  <div class="flex items-center gap-2">
+    <a href="{% url 'rentals:unit_ledger' unit.pk %}"
+       class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Ledger
+    </a>
+    <a href="{% url 'rentals:unit_demand' unit.pk %}" target="_blank"
+       class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Rent demand
+    </a>
+    <a href="{% url 'rentals:unit_edit' unit.pk %}"
+       class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      Edit
+    </a>
+    <a href="{% url 'rentals:unit_delete' unit.pk %}"
+       class="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-rose-600 shadow-soft transition hover:-translate-y-0.5 hover:bg-rose-50 hover:shadow-lg">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      Delete
+    </a>
+    <a href="{% url 'rentals:payment_create' unit.pk %}"
+       class="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-{{ branding.accent }}-500 to-{{ branding.accent }}-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-soft ring-1 ring-{{ branding.accent }}-700/10 transition hover:-translate-y-0.5 hover:shadow-lg">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      Record rent
+    </a>
+  </div>
+</div>
+
+<!-- Figures -->
+<div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
+    <p class="text-sm font-medium text-slate-500">Monthly rent</p>
+    <p class="mt-2 text-2xl font-bold tracking-tight text-slate-900">{{ current_rent }} <span class="text-base font-semibold text-slate-400">{{ unit.currency }}</span></p>
+    {% if revisions %}<p class="mt-2 text-xs text-slate-400">Current rate · started at {{ unit.monthly_rent }} {{ unit.currency }}</p>
+    {% elif unit.deposit %}<p class="mt-2 text-xs text-slate-400">Deposit held: {{ unit.deposit }} {{ unit.currency }}</p>{% endif %}
+  </div>
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
+    <p class="text-sm font-medium text-slate-500">Due to date</p>
+    <p class="mt-2 text-2xl font-bold tracking-tight text-slate-900">{{ expected }} <span class="text-base font-semibold text-slate-400">{{ unit.currency }}</span></p>
+    <p class="mt-2 text-xs text-slate-400">{{ months_due }} month{{ months_due|pluralize }} since {{ unit.start_date }}</p>
+  </div>
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
+    <p class="text-sm font-medium text-slate-500">Collected</p>
+    <p class="mt-2 text-2xl font-bold tracking-tight text-emerald-600">{{ paid_total }} <span class="text-base font-semibold text-emerald-400/70">{{ unit.currency }}</span></p>
+    <p class="mt-2 text-xs text-slate-400">All rent received</p>
+  </div>
+  <div class="rounded-2xl border bg-white p-6 shadow-soft {% if in_arrears %}border-rose-200{% else %}border-emerald-200{% endif %}">
+    <p class="text-sm font-medium text-slate-500">Balance</p>
+    {% if in_arrears %}
+      <p class="mt-2 text-2xl font-bold tracking-tight text-rose-600">{{ balance }} <span class="text-base font-semibold text-slate-400">{{ unit.currency }}</span></p>
+      <p class="mt-2 text-xs text-rose-500">In arrears</p>
+    {% elif balance < 0 %}
+      <p class="mt-2 text-2xl font-bold tracking-tight text-emerald-600">Paid ahead</p>
+      <p class="mt-2 text-xs text-slate-400">{{ balance }} {{ unit.currency }}</p>
+    {% else %}
+      <p class="mt-2 text-2xl font-bold tracking-tight text-emerald-600">Up to date</p>
+      <p class="mt-2 text-xs text-slate-400">Nothing outstanding</p>
+    {% endif %}
+  </div>
+</div>
+
+{% if unit.note %}
+<div class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-soft">
+  <span class="font-semibold text-slate-700">Note:</span> {{ unit.note }}
+</div>
+{% endif %}
+
+<!-- Rent history (revisions) -->
+<div class="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft">
+  <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Rent history</h2>
+    <a href="{% url 'rentals:revision_add' unit.pk %}"
+       class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-soft transition hover:-translate-y-0.5 hover:shadow">
+      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+      Change rent
+    </a>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-sm">
+      <tbody class="divide-y divide-slate-100">
+        <tr class="text-slate-600">
+          <td class="px-6 py-3 whitespace-nowrap text-slate-500">{{ unit.start_date|date:"M Y" }}</td>
+          <td class="px-6 py-3 font-medium text-slate-700">{{ unit.monthly_rent }} {{ unit.currency }}</td>
+          <td class="px-6 py-3 text-slate-500">Opening rent</td>
+          <td class="px-6 py-3"></td>
+        </tr>
+        {% for r in revisions %}
+          <tr class="group text-slate-600 transition hover:bg-slate-50/70">
+            <td class="px-6 py-3 whitespace-nowrap text-slate-500">{{ r.effective_label }}</td>
+            <td class="px-6 py-3 font-medium text-slate-700">{{ r.monthly_rent }} {{ unit.currency }}</td>
+            <td class="px-6 py-3 text-slate-500">{{ r.reason|default:"Rent change" }}{% if r.note %} · {{ r.note }}{% endif %}</td>
+            <td class="px-6 py-3 text-right whitespace-nowrap">
+              <a href="{% url 'rentals:revision_edit' r.pk %}" title="Edit rent change"
+                 class="inline-flex items-center rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </a>
+              <a href="{% url 'rentals:revision_delete' r.pk %}" title="Remove rent change"
+                 class="inline-flex items-center rounded-lg p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Rebates & concessions -->
+<div class="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft">
+  <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+    <div>
+      <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Rebates &amp; concessions</h2>
+      {% if rebate_total %}<p class="mt-0.5 text-xs text-slate-400">{{ rebate_total }} {{ unit.currency }} credited · booked to Finance as expense</p>{% endif %}
+    </div>
+    <a href="{% url 'rentals:adjustment_add' unit.pk %}"
+       class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-soft transition hover:-translate-y-0.5 hover:shadow">
+      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      Add rebate
+    </a>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-sm">
+      <tbody class="divide-y divide-slate-100">
+        {% for a in adjustments %}
+          <tr class="group text-slate-600 transition hover:bg-slate-50/70">
+            <td class="px-6 py-3 whitespace-nowrap text-slate-500">{{ a.period_label }}</td>
+            <td class="px-6 py-3 font-semibold text-amber-600">−{{ a.amount }} {{ unit.currency }}</td>
+            <td class="px-6 py-3 text-slate-600">{{ a.reason }}{% if a.note %} · {{ a.note }}{% endif %}</td>
+            <td class="px-6 py-3 text-slate-400">granted {{ a.dated_on }}</td>
+            <td class="px-6 py-3 text-right whitespace-nowrap">
+              <a href="{% url 'rentals:adjustment_delete' a.pk %}" title="Void rebate"
+                 class="inline-flex items-center rounded-lg p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="px-6 py-8 text-center text-slate-400">No rebates recorded. Grant one when a unit is in poor condition or you agree a concession.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Payment history -->
+<div class="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft">
+  <h2 class="border-b border-slate-100 px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">Rent receipts</h2>
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-sm">
+      <thead>
+        <tr class="border-b border-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <th class="px-6 py-3">Receipt</th>
+          <th class="px-6 py-3">Paid on</th>
+          <th class="px-6 py-3">For period</th>
+          <th class="px-6 py-3">Method</th>
+          <th class="px-6 py-3 text-right">Amount</th>
+          <th class="px-6 py-3 text-right"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for p in payments %}
+          <tr class="group transition hover:bg-slate-50/70">
+            <td class="px-6 py-3 font-medium text-slate-700">#{{ p.receipt_number }}</td>
+            <td class="px-6 py-3 text-slate-500">{{ p.paid_on }}</td>
+            <td class="px-6 py-3 text-slate-600">{{ p.period_label }}</td>
+            <td class="px-6 py-3 text-slate-500">{{ p.get_method_display }}</td>
+            <td class="px-6 py-3 text-right font-semibold text-emerald-600">+{{ p.amount }} {{ p.currency }}</td>
+            <td class="px-6 py-3 text-right whitespace-nowrap">
+              <a href="{% url 'rentals:payment_slip' p.pk %}" target="_blank" title="Rent receipt slip"
+                 class="inline-flex items-center rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-{{ branding.accent }}-600">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              </a>
+              <a href="{% url 'rentals:payment_edit' p.pk %}" title="Edit receipt"
+                 class="inline-flex items-center rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </a>
+              <a href="{% url 'rentals:payment_delete' p.pk %}" title="Void receipt"
+                 class="inline-flex items-center rounded-lg p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">No rent recorded for this unit yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

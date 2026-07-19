@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Vendors · {{ current_org.name }}{% endblock %}
+{% block content %}
+<div class="mb-6">
+  <a href="{% url 'purchases:overview' %}" class="inline-flex items-center gap-1 text-sm font-medium text-slate-500 transition hover:text-slate-700">
+    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    Purchases
+  </a>
+</div>
+
+<div>
+  <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Vendors</h1>
+  <p class="mt-1 text-sm text-slate-500">Suppliers {{ current_org.name }} buys from. Pick a vendor when recording a purchase.</p>
+</div>
+
+<div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+  <!-- Existing vendors -->
+  <div class="lg:col-span-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft">
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b border-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <th class="px-6 py-3">Vendor</th>
+            <th class="px-6 py-3">Phone</th>
+            <th class="px-6 py-3 text-right">Purchases</th>
+            <th class="px-6 py-3 text-right"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for v in vendors %}
+            <tr class="transition hover:bg-slate-50/70">
+              <td class="px-6 py-3.5">
+                <span class="font-semibold text-slate-800">{{ v.name }}</span>
+                {% if v.note %}<p class="text-xs text-slate-400">{{ v.note }}</p>{% endif %}
+              </td>
+              <td class="px-6 py-3.5 text-slate-600">{{ v.phone|default:"—" }}</td>
+              <td class="px-6 py-3.5 text-right text-slate-600">{{ v.purchase_count }}</td>
+              <td class="px-6 py-3.5 text-right whitespace-nowrap">
+                <a href="{% url 'purchases:vendor_edit' v.pk %}" title="Edit"
+                   class="inline-flex items-center rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </a>
+                <a href="{% url 'purchases:vendor_delete' v.pk %}" title="Delete"
+                   class="inline-flex items-center rounded-lg p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="px-6 py-12 text-center text-slate-400">No vendors yet. Add your first one on the right.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add form -->
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
+    <h2 class="text-sm font-semibold text-slate-700">Add a vendor</h2>
+    <form method="post" class="mt-4 space-y-4">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ form.non_field_errors }}</div>
+      {% endif %}
+      <div>
+        <label class="block text-sm font-medium text-slate-700">Name</label>
+        {{ form.name }}
+        {{ form.name.errors }}
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700">Phone</label>
+        {{ form.phone }}
+        {{ form.phone.errors }}
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700">Note</label>
+        {{ form.note }}
+        {{ form.note.errors }}
+      </div>
+      <button type="submit"
+              class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-{{ branding.accent }}-500 to-{{ branding.accent }}-600 px-5 py-2.5 text-sm font-semibold text-white shadow-soft ring-1 ring-{{ branding.accent }}-700/10 transition hover:-translate-y-0.5 hover:shadow-lg">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Add vendor
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

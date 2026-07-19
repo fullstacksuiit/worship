@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Plans · {{ current_org.name }}{% endblock %}
+{% block content %}
+<div x-data="{ period: 'monthly' }">
+  <div class="text-center">
+    <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Choose your plan</h1>
+    <p class="mx-auto mt-2 max-w-lg text-sm text-slate-500">Start free, upgrade when you grow. Change or cancel anytime.</p>
+
+    {% if has_yearly %}
+    <!-- Billing period toggle -->
+    <div class="mt-6 inline-flex items-center rounded-full border border-slate-200 bg-white p-1 text-sm font-semibold shadow-soft">
+      <button @click="period = 'monthly'" type="button"
+              :class="period === 'monthly' ? 'bg-{{ branding.accent }}-600 text-white shadow' : 'text-slate-500 hover:text-slate-700'"
+              class="rounded-full px-4 py-1.5 transition">Monthly</button>
+      <button @click="period = 'yearly'" type="button"
+              :class="period === 'yearly' ? 'bg-{{ branding.accent }}-600 text-white shadow' : 'text-slate-500 hover:text-slate-700'"
+              class="rounded-full px-4 py-1.5 transition">Yearly <span class="text-xs font-medium opacity-80">· save ~17%</span></button>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    {% for p in available %}
+    <div {% if p.price_amount %}x-show="period === '{{ p.interval }}'" x-transition{% endif %}
+         class="relative flex flex-col rounded-2xl border bg-white p-6 shadow-soft transition
+           {% if p.code == current_code %}border-{{ branding.accent }}-400 ring-2 ring-{{ branding.accent }}-200{% else %}border-slate-200 hover:-translate-y-1 hover:shadow-lg{% endif %}">
+
+      {% if p.code == current_code %}
+      <span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-{{ branding.accent }}-600 px-3 py-1 text-xs font-semibold text-white shadow">Current plan</span>
+      {% endif %}
+
+      <div class="flex items-center gap-3">
+        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-{{ branding.accent }}-500 to-{{ branding.accent }}-700 text-white shadow-sm ring-1 ring-black/5">
+          {% if p.tier == 0 %}
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          {% elif p.tier == 1 %}
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          {% else %}
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+          {% endif %}
+        </span>
+        <h2 class="text-lg font-bold text-slate-900">{{ p.name }}</h2>
+      </div>
+
+      <p class="mt-4 flex items-baseline gap-1">
+        <span class="text-3xl font-extrabold tracking-tight text-slate-900">{% if p.price_amount %}{{ p.price_amount }}{% else %}Free{% endif %}</span>
+        {% if p.price_amount %}<span class="text-sm font-medium text-slate-400">{{ p.currency }}/{{ p.get_interval_display|lower }}</span>{% endif %}
+      </p>
+      <p class="mt-2 min-h-[2.5rem] text-sm text-slate-500">{{ p.description }}</p>
+
+      <ul class="mt-5 space-y-2.5 border-t border-slate-100 pt-5 text-sm">
+        {% include "billing/_planfeature.html" with on=True label=p.max_members|default_if_none:"Unlimited"|stringformat:"s"|add:" members" %}
+        {% include "billing/_planfeature.html" with on=True label=p.max_users|default_if_none:"Unlimited"|stringformat:"s"|add:" staff logins" %}
+        {% include "billing/_planfeature.html" with on=True label="Donations & receipts" %}
+        {% include "billing/_planfeature.html" with on=p.features.finance label="Finance: budgets & pledges" %}
+        {% include "billing/_planfeature.html" with on=p.features.rentals label="Property rentals & rent tracking" %}
+        {% include "billing/_planfeature.html" with on=p.features.events label="Events" %}
+      </ul>
+
+      <div class="mt-6 pt-2">
+        {% if p.code == current_code %}
+          <button disabled class="w-full cursor-default rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-400">Current plan</button>
+        {% elif can_manage %}
+          <form method="post" action="{% url 'billing:change_plan' %}">
+            {% csrf_token %}
+            <input type="hidden" name="plan" value="{{ p.code }}">
+            <button type="submit" class="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
+              {% if p.tier == 0 %}Switch to Free{% elif p.trial_days %}Start {{ p.trial_days }}-day trial{% else %}Choose {{ p.name }}{% endif %}
+            </button>
+          </form>
+        {% else %}
+          <button disabled class="w-full cursor-not-allowed rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-400">Owners only</button>
+        {% endif %}
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-span-full rounded-2xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-400">
+      No plans are available yet.
+    </div>
+    {% endfor %}
+  </div>
+
+  <p class="mt-8 text-center text-xs text-slate-400">
+    <a href="{% url 'billing:overview' %}" class="font-medium text-{{ branding.accent }}-600 hover:underline">← Back to billing</a>
+  </p>
+</div>
+{% endblock %}

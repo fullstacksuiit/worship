@@ -1,15 +1,18 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
+from django.db.models import Q
 from django.utils.text import slugify
 
-from .models import FaithTradition, Member, Organization
+from .models import FaithTradition, Member, Organization, UserOrgMembership
+from .permissions import ASSIGNABLE_ROLE_CHOICES
 from .preferences import ORG_PREFERENCES
 
 _INPUT = (
-    "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 "
-    "text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 "
-    "focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+    # Look lives in the global .field-control stylesheet (templates/base.html):
+    # brand-tinted focus ring, custom <select> caret, styled date pickers.
+    "field-control mt-1 block w-full border px-3.5 py-2.5 "
+    "text-sm text-slate-900 shadow-sm"
 )
 
 # A short, practical currency list for the regions these communities cluster in.
@@ -97,18 +100,37 @@ class MemberForm(forms.ModelForm):
 
     class Meta:
         model = Member
-        fields = ["first_name", "last_name", "email", "phone", "notes", "is_active"]
+        fields = [
+            "first_name",
+            "last_name",
+            "email",
+            "phone",
+            "level",
+            "notes",
+            "is_active",
+        ]
         widgets = {
             "first_name": forms.TextInput(attrs={"class": _INPUT}),
             "last_name": forms.TextInput(attrs={"class": _INPUT}),
             "email": forms.EmailInput(attrs={"class": _INPUT}),
             "phone": forms.TextInput(attrs={"class": _INPUT}),
+            "level": forms.Select(attrs={"class": _INPUT}),
             "notes": forms.Textarea(attrs={"class": _INPUT, "rows": 3}),
         }
 
     def __init__(self, *args, organization, **kwargs):
         super().__init__(*args, **kwargs)
         self.organization = organization
+        # Only this org's active levels are selectable (plus whatever is already
+        # set on the member, so editing never silently drops a disabled level).
+        levels = self.organization.membershiplevels.filter(is_active=True)
+        if self.instance.pk and self.instance.level_id:
+            levels = self.organization.membershiplevels.filter(
+                Q(is_active=True) | Q(pk=self.instance.level_id)
+            )
+        self.fields["level"].queryset = levels
+        self.fields["level"].label = "Membership level"
+        self.fields["level"].empty_label = "— No level —"
 
     def clean_email(self):
         # Enforce the per-org unique-email rule with a friendly message rather
@@ -132,6 +154,79 @@ class MemberForm(forms.ModelForm):
         if commit:
             member.save()
         return member
+
+
+class TeamMemberForm(forms.Form):
+    """Owner/Admin creates a new login for their organization and assigns it a
+    role. Sets a starting password directly (no email round-trip); the member
+    can change it later. The view attaches them to the org via UserOrgMembership."""
+
+    first_name = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={"class": _INPUT}),
+    )
+    last_name = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={"class": _INPUT}),
+    )
+    username = forms.CharField(
+        max_length=150,
+        help_text="What they'll sign in with.",
+        widget=forms.TextInput(attrs={"class": _INPUT, "placeholder": "e.g. amina"}),
+    )
+    email = forms.EmailField(
+        required=False,
+        widget=forms.EmailInput(attrs={"class": _INPUT}),
+    )
+    role = forms.ChoiceField(
+        choices=ASSIGNABLE_ROLE_CHOICES,
+        widget=forms.Select(attrs={"class": _INPUT}),
+    )
+    password1 = forms.CharField(
+        label="Temporary password",
+        widget=forms.PasswordInput(attrs={"class": _INPUT}),
+    )
+    password2 = forms.CharField(
+        label="Confirm password",
+        widget=forms.PasswordInput(attrs={"class": _INPUT}),
+    )
+
+    def clean_username(self):
+        username = self.cleaned_data["username"]
+        if User.objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError("That username is already taken.")
+        return username
+
+    def clean(self):
+        cleaned = super().clean()
+        p1, p2 = cleaned.get("password1"), cleaned.get("password2")
+        if p1 and p2:
+            if p1 != p2:
+                self.add_error("password2", "The two passwords don't match.")
+            else:
+                try:
+                    validate_password(p1)
+                except forms.ValidationError as exc:
+                    self.add_error("password1", exc)
+        return cleaned
+
+
+class TeamRoleForm(forms.ModelForm):
+    """Edit an existing team member's role and active state. The owner's
+    membership is protected — the view never renders this form for it."""
+
+    class Meta:
+        model = UserOrgMembership
+        fields = ["role", "is_active"]
+        widgets = {
+            "role": forms.Select(attrs={"class": _INPUT}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["role"].choices = ASSIGNABLE_ROLE_CHOICES
 
 
 # A curated set of common timezones. Kept short and human-friendly rather than

@@ -19,12 +19,12 @@
   <div>
     <label class="block text-sm font-medium text-slate-700" for="{{ form.username.id_for_label }}">Username</label>
     <input type="text" name="username" id="{{ form.username.id_for_label }}" required autofocus
-           class="mt-1.5 block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm shadow-sm transition placeholder:text-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+           class="field-control mt-1.5 block w-full border px-3.5 py-2.5 text-sm shadow-sm">
   </div>
   <div>
     <label class="block text-sm font-medium text-slate-700" for="{{ form.password.id_for_label }}">Password</label>
     <input type="password" name="password" id="{{ form.password.id_for_label }}" required
-           class="mt-1.5 block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm shadow-sm transition placeholder:text-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+           class="field-control mt-1.5 block w-full border px-3.5 py-2.5 text-sm shadow-sm">
   </div>
   <button type="submit" class="w-full rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:-translate-y-0.5">Sign in</button>
 </form>

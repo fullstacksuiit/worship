@@ -12,7 +12,15 @@
   <div class="flex items-center gap-4">
     <span class="flex h-14 w-14 flex-none items-center justify-center rounded-2xl bg-gradient-to-br from-{{ branding.accent }}-500 to-{{ branding.accent }}-700 text-lg font-bold uppercase text-white shadow-soft ring-1 ring-black/5">{{ member.full_name|slice:":2" }}</span>
     <div>
-      <h1 class="text-2xl font-bold tracking-tight text-slate-900">{{ member.full_name }}</h1>
+      <div class="flex flex-wrap items-center gap-2.5">
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900">{{ member.full_name }}</h1>
+        {% if member.level %}
+          <span class="inline-flex items-center gap-1.5 rounded-full bg-{{ branding.accent }}-50 px-2.5 py-0.5 text-xs font-semibold text-{{ branding.accent }}-700 ring-1 ring-{{ branding.accent }}-100">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L23 12l-5.714 2.143L15 21l-2.286-6.857L7 12l5.714-2.143L15 3z"/></svg>
+            {{ member.level.name }}
+          </span>
+        {% endif %}
+      </div>
       <p class="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-slate-500">
         <span>{{ member.email|default:"No email" }}</span><span class="text-slate-300">·</span><span>{{ member.phone|default:"No phone" }}</span>
         {% if not member.is_active %}<span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">Inactive</span>{% endif %}
@@ -20,15 +28,19 @@
     </div>
   </div>
   <div class="flex gap-3">
+    {% if caps.donations_record %}
     <a href="{% url 'donations:donation_create' %}?donor={{ member.pk }}"
        class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-{{ branding.accent }}-500 to-{{ branding.accent }}-600 px-4 py-2.5 text-sm font-semibold text-white shadow-soft ring-1 ring-{{ branding.accent }}-700/10 transition hover:-translate-y-0.5 hover:shadow-lg">
       <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
       Record donation
     </a>
+    {% endif %}
+    {% if caps.members_manage %}
     <a href="{% url 'core:member_edit' member.pk %}"
        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
       Edit
     </a>
+    {% endif %}
   </div>
 </div>
 
@@ -40,12 +52,20 @@
     <p class="mt-1 text-xs text-slate-400">across {{ gift_count }} donation{{ gift_count|pluralize }}</p>
   </div>
   <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
-    <p class="mb-3 text-sm font-medium text-slate-500">By fund</p>
-    <ul class="space-y-2 text-sm">
+    <p class="mb-4 text-sm font-medium text-slate-500">By fund</p>
+    <ul class="space-y-4 text-sm">
       {% for row in by_fund %}
-        <li class="flex items-center justify-between">
-          <span class="flex items-center gap-2 text-slate-600"><span class="h-2 w-2 rounded-full bg-{{ branding.accent }}-400"></span>{{ row.fund__name }}</span>
-          <span class="font-semibold text-slate-800">{{ row.total }} {{ current_org.currency }}</span>
+        <li>
+          <div class="flex items-center justify-between">
+            <span class="flex items-center gap-2 font-medium text-slate-700"><span class="h-2.5 w-2.5 rounded-full bg-{{ branding.accent }}-500"></span>{{ row.fund__name }}</span>
+            <span class="font-semibold text-slate-900">{{ row.total }} <span class="text-xs font-medium text-slate-400">{{ current_org.currency }}</span></span>
+          </div>
+          <div class="mt-2 flex items-center gap-2">
+            <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+              <div class="h-full rounded-full bg-gradient-to-r from-{{ branding.accent }}-400 to-{{ branding.accent }}-600" style="width: {{ row.pct }}%"></div>
+            </div>
+            <span class="w-9 text-right text-xs font-medium tabular-nums text-slate-400">{{ row.pct }}%</span>
+          </div>
         </li>
       {% empty %}
         <li class="text-slate-400">No donations yet.</li>
@@ -80,7 +100,7 @@
           <tr class="transition hover:bg-slate-50/70">
             <td class="px-6 py-3 font-mono text-xs text-slate-400">#{{ d.receipt_number }}</td>
             <td class="px-6 py-3 text-slate-700">{{ d.fund.name }}</td>
-            <td class="px-6 py-3"><span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{{ d.get_method_display }}</span></td>
+            <td class="px-6 py-3"><span class="inline-flex items-center whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">{{ d.get_method_display }}</span></td>
             <td class="px-6 py-3 text-slate-500">{{ d.received_at }}</td>
             <td class="px-6 py-3 text-right font-semibold text-slate-900">{{ d.amount }} {{ d.currency }}</td>
           </tr>

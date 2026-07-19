@@ -8,11 +8,30 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.safestring import mark_safe
 from django.utils.text import slugify
 
+from billing.access import within_limit
+from billing.models import Plan, Subscription, SubscriptionStatus
 from donations.models import DEFAULT_FUNDS, Fund
-from finance.models import DEFAULT_CATEGORIES, Category
+from donations.models import DEFAULT_CATEGORIES, Category
+from rentals.models import DEFAULT_PROPERTY_TYPES, PropertyType
 
-from .forms import MemberForm, OrganizationSettingsForm, OrgSignupForm
-from .models import Member, Organization, OrgRole, UserOrgMembership
+from .context_processors import FAITH_BRANDING
+from .forms import (
+    MemberForm,
+    OrganizationSettingsForm,
+    OrgSignupForm,
+    TeamMemberForm,
+    TeamRoleForm,
+)
+from .models import (
+    DEFAULT_MEMBERSHIP_LEVELS,
+    FaithTradition,
+    Member,
+    MembershipLevel,
+    Organization,
+    OrgRole,
+    UserOrgMembership,
+)
+from .permissions import ROLE_META, Cap, require_cap
 from .preferences import PREFERENCE_GROUP_META
 
 
@@ -30,19 +49,26 @@ def landing(request):
             f'stroke-linejoin="round" stroke-width="2" d="{path}"/></svg>'
         )
 
+    # Derived from FAITH_BRANDING so new traditions show up automatically.
+    # Sorted alphabetically and rendered with one shared icon (tinted per
+    # accent) so the grid reads as an equal, inclusive set — never a ranking.
+    faiths = sorted(
+        (
+            {"place": FAITH_BRANDING[f]["place"], "accent": FAITH_BRANDING[f]["accent"]}
+            for f in FaithTradition
+            if f in FAITH_BRANDING
+        ),
+        key=lambda f: f["place"].lower(),
+    )
+
     context = {
         "stats": [
-            ("4", "Faith traditions"),
+            (str(len(faiths)), "Faith traditions"),
             ("1 step", "To get started"),
             ("∞", "Members & gifts"),
             ("0", "Spreadsheets needed"),
         ],
-        "faiths": [
-            ("🕌", "Mosque"),
-            ("🛕", "Mandir"),
-            ("⛪", "Church"),
-            ("🪯", "Gurudwara"),
-        ],
+        "faiths": faiths,
         "features": [
             {
                 "icon": _icon("M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 "
@@ -135,9 +161,29 @@ def signup(request):
                     role=OrgRole.OWNER,
                     is_default=True,
                 )
+                # Grant a lifetime, all-features subscription on signup: attach
+                # the top-tier plan (unlimited members/staff, every feature) and
+                # leave current_period_end NULL so is_current never lapses.
+                top_plan = Plan.objects.order_by("-tier", "price_amount").first()
+                if top_plan is not None:
+                    Subscription.objects.create(
+                        organization=org,
+                        plan=top_plan,
+                        status=SubscriptionStatus.ACTIVE,
+                    )
                 Fund.objects.bulk_create(
                     Fund(organization=org, code=code, name=name)
                     for code, name in DEFAULT_FUNDS.get(org.faith_tradition, [])
+                )
+                # Seed the faith's membership levels (General, Sadar, ...) so the
+                # member form has standings to choose from straight away.
+                MembershipLevel.objects.bulk_create(
+                    MembershipLevel(
+                        organization=org, code=code, name=name, order=order
+                    )
+                    for order, (code, name) in enumerate(
+                        DEFAULT_MEMBERSHIP_LEVELS.get(org.faith_tradition, [])
+                    )
                 )
                 # Seed generic income/expense categories so the books are ready
                 # to use the moment the org is created.
@@ -145,6 +191,12 @@ def signup(request):
                     Category(organization=org, kind=kind, code=code, name=name)
                     for kind, entries in DEFAULT_CATEGORIES.items()
                     for code, name in entries
+                )
+                # Seed default rentable property types (Shop, Hall, Room, ...) so
+                # the rentals module is ready to add units immediately.
+                PropertyType.objects.bulk_create(
+                    PropertyType(organization=org, code=code, name=name)
+                    for code, name in DEFAULT_PROPERTY_TYPES
                 )
 
             login(request, user, backend="django.contrib.auth.backends.ModelBackend")
@@ -162,6 +214,7 @@ def signup(request):
 
 
 @login_required
+@require_cap(Cap.MEMBERS_VIEW)
 def member_list(request):
     org = getattr(request, "organization", None)
     if org is None:
@@ -170,6 +223,7 @@ def member_list(request):
     query = request.GET.get("q", "").strip()
     members = (
         Member.objects.filter(organization=org)
+        .select_related("level")
         .annotate(
             total_given=Sum("donations__amount"),
             gift_count=Count("donations"),
@@ -191,10 +245,16 @@ def member_list(request):
 
 
 @login_required
+@require_cap(Cap.MEMBERS_MANAGE)
 def member_create(request):
     org = getattr(request, "organization", None)
     if org is None:
         return render(request, "donations/no_org.html")
+
+    # Enforce the plan's member cap before letting another one be added.
+    current_members = Member.objects.filter(organization=org).count()
+    if not within_limit(request, "max_members", current_members):
+        return redirect("billing:plans")
 
     if request.method == "POST":
         form = MemberForm(request.POST, organization=org)
@@ -211,21 +271,28 @@ def member_create(request):
 
 
 @login_required
+@require_cap(Cap.MEMBERS_VIEW)
 def member_detail(request, pk):
     org = getattr(request, "organization", None)
     if org is None:
         return render(request, "donations/no_org.html")
 
-    member = get_object_or_404(Member, pk=pk, organization=org)
+    member = get_object_or_404(
+        Member.objects.select_related("level"), pk=pk, organization=org
+    )
     donations = member.donations.select_related("fund").order_by(
         "-received_at", "-created_at"
     )
     totals = donations.aggregate(total=Sum("amount"), count=Count("id"))
-    by_fund = (
+    total_given = totals["total"] or 0
+    by_fund = list(
         donations.values("fund__name")
         .annotate(total=Sum("amount"))
         .order_by("-total")
     )
+    # Share of the member's total per fund, for proportion bars in the template.
+    for row in by_fund:
+        row["pct"] = round((row["total"] / total_given) * 100) if total_given else 0
 
     return render(
         request,
@@ -233,7 +300,7 @@ def member_detail(request, pk):
         {
             "member": member,
             "donations": donations,
-            "total_given": totals["total"] or 0,
+            "total_given": total_given,
             "gift_count": totals["count"] or 0,
             "by_fund": by_fund,
         },
@@ -241,6 +308,7 @@ def member_detail(request, pk):
 
 
 @login_required
+@require_cap(Cap.MEMBERS_MANAGE)
 def member_edit(request, pk):
     org = getattr(request, "organization", None)
     if org is None:
@@ -272,6 +340,7 @@ SETTINGS_ROLES = (OrgRole.OWNER, OrgRole.ADMIN)
 
 
 @login_required
+@require_cap(Cap.SETTINGS_MANAGE)
 def org_settings(request):
     """Edit the current organization's profile, locale, and customisable
     preferences. Restricted to Owners and Admins."""
@@ -353,3 +422,136 @@ def org_settings(request):
             "sections": sections,
         },
     )
+
+
+# --- Team / user access ----------------------------------------------------
+
+
+@login_required
+@require_cap(Cap.TEAM_MANAGE)
+def team_list(request):
+    """Everyone with a login to this organization, with their role and status.
+    Owners/Admins land here to add, re-role, or deactivate team members."""
+    org = request.organization
+    memberships = (
+        UserOrgMembership.objects.filter(organization=org)
+        .select_related("user")
+        .order_by("-is_active", "role", "user__username")
+    )
+    return render(
+        request,
+        "team/list.html",
+        {"memberships": memberships, "role_meta": ROLE_META},
+    )
+
+
+@login_required
+@require_cap(Cap.TEAM_MANAGE)
+def team_add(request):
+    """Create a new login for the org and attach it with a chosen role."""
+    org = request.organization
+
+    # Respect the plan's staff-login cap before adding another.
+    current_users = UserOrgMembership.objects.filter(organization=org).count()
+    if not within_limit(request, "max_users", current_users):
+        messages.info(
+            request,
+            "You've reached your plan's team-member limit — upgrade to add more.",
+        )
+        return redirect("billing:plans")
+
+    if request.method == "POST":
+        form = TeamMemberForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            with transaction.atomic():
+                user = User.objects.create_user(
+                    username=data["username"],
+                    email=data["email"],
+                    password=data["password1"],
+                    first_name=data["first_name"],
+                    last_name=data["last_name"],
+                )
+                UserOrgMembership.objects.create(
+                    user=user,
+                    organization=org,
+                    role=data["role"],
+                )
+            messages.success(
+                request,
+                f"Added {user.get_username()} to the team. Share their sign-in "
+                "details so they can log in.",
+            )
+            return redirect("core:team_list")
+    else:
+        form = TeamMemberForm()
+
+    return render(
+        request,
+        "team/form.html",
+        {"form": form, "role_meta": ROLE_META},
+    )
+
+
+@login_required
+@require_cap(Cap.TEAM_MANAGE)
+def team_edit(request, pk):
+    """Change a team member's role or deactivate them. The owner's membership
+    and your own can't be edited here — guarding against self-lockout and
+    removing the org's only owner."""
+    org = request.organization
+    membership = get_object_or_404(
+        UserOrgMembership.objects.select_related("user"),
+        pk=pk,
+        organization=org,
+    )
+
+    if membership.is_owner:
+        messages.error(request, "The owner's role can't be changed here.")
+        return redirect("core:team_list")
+    if membership.user_id == request.user.id:
+        messages.error(request, "You can't change your own role or access.")
+        return redirect("core:team_list")
+
+    if request.method == "POST":
+        form = TeamRoleForm(request.POST, instance=membership)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request, f"Updated {membership.user.get_username()}."
+            )
+            return redirect("core:team_list")
+    else:
+        form = TeamRoleForm(instance=membership)
+
+    return render(
+        request,
+        "team/form.html",
+        {"form": form, "membership": membership, "role_meta": ROLE_META},
+    )
+
+
+@login_required
+@require_cap(Cap.TEAM_MANAGE)
+def team_remove(request, pk):
+    """Remove a team member from the organization (POST only). Deletes the
+    membership, not the underlying login — the person simply loses access."""
+    org = request.organization
+    membership = get_object_or_404(
+        UserOrgMembership.objects.select_related("user"),
+        pk=pk,
+        organization=org,
+    )
+
+    if membership.is_owner:
+        messages.error(request, "The owner can't be removed from the team.")
+        return redirect("core:team_list")
+    if membership.user_id == request.user.id:
+        messages.error(request, "You can't remove yourself from the team.")
+        return redirect("core:team_list")
+
+    if request.method == "POST":
+        username = membership.user.get_username()
+        membership.delete()
+        messages.success(request, f"Removed {username} from the team.")
+    return redirect("core:team_list")

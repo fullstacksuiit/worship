@@ -1,0 +1,12 @@
+{% comment %}
+  Small icon + UPPERCASE section header for grouping fields inside a form card —
+  mirrors the section-label pattern used across the app's dashboards ("BY FUND",
+  "RECENT ACTIVITY"), so forms read as considered and organised rather than a
+  flat stack of inputs. Params: `label` (text), `icon` (an SVG path `d`).
+{% endcomment %}
+<div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
+  <svg class="h-4 w-4 text-{{ branding.accent }}-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="{{ icon }}"/>
+  </svg>
+  {{ label }}
+</div>
