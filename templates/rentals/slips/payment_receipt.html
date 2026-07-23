@@ -1,0 +1,57 @@
+{% extends "rentals/slips/_slip_base.html" %}
+
+{% block title %}Receipt No. {{ payment.pk }}{% endblock %}
+{% block doc_kind %}Rent Receipt{% endblock %}
+{% block doc_meta %}No. {{ payment.pk }} · {{ payment.date|date:"j M Y" }}{% endblock %}
+
+{% block slip_body %}
+  <div class="parties">
+    <div>
+      <div class="label">Received with thanks from</div>
+      <div class="value"><strong>{{ payment.payer_name|default:"—" }}</strong></div>
+    </div>
+    <div>
+      <div class="label">Received on</div>
+      <div class="value">{{ payment.date|date:"j M Y" }}</div>
+    </div>
+    <div>
+      <div class="label">Towards</div>
+      <div class="value">{{ payment.paid_for }}</div>
+    </div>
+    <div>
+      <div class="label">Paid by</div>
+      <div class="value">
+        {{ payment.get_method_display }}{% if payment.reference %} · {{ payment.reference }}{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="grand">
+    <div>
+      <div class="grand-label">Amount received</div>
+      <div class="words">{{ amount_words }}</div>
+    </div>
+    <div class="grand-amount">{{ payment.amount_display }}</div>
+  </div>
+
+  {% if balance is not None %}
+    <div class="note">
+      {% if balance > 0 %}
+        Balance still outstanding after this payment:
+        <strong style="color:var(--red)">{{ balance_display }}</strong>.
+      {% else %}
+        This payment clears the account — nothing further is due. Thank you.
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% if payment.note %}
+    <div class="note">{{ payment.note }}</div>
+  {% endif %}
+
+  <div class="sign">
+    <div class="sign-box">
+      <div class="sign-line">Authorised signatory · {{ org.name }}</div>
+    </div>
+  </div>
+{% endblock %}

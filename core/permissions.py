@@ -42,6 +42,15 @@ CAPABILITIES = {
     VIEWER: set(),
 }
 
+# Some jobs sit across two roles. Recording rent received is one: it's the
+# treasurer's job by any ordinary reading, and it writes a row in the books —
+# but the person who keeps the rentals is usually the one holding the cash. So
+# either capability is enough, rather than forcing places to hand out a second
+# role to whoever happens to collect.
+DERIVED_CAPABILITIES = {
+    "record_rent": {"manage_rentals", "manage_money"},
+}
+
 
 def get_role(user):
     """Resolve a user's role within their own place.
@@ -65,7 +74,10 @@ def user_caps(user):
 
 
 def has_cap(user, cap):
-    return cap in user_caps(user)
+    caps = user_caps(user)
+    if cap in DERIVED_CAPABILITIES:
+        return bool(caps & DERIVED_CAPABILITIES[cap])
+    return cap in caps
 
 
 def cap_required(cap):

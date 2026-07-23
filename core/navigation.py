@@ -51,7 +51,7 @@ def modules(org):
         {
             "key": "rentals", "label": "Rentals", "icon": "🏛️",
             "url": "rentals:list", "ns": "rentals",
-            "desc": "Halls, rooms and property bookings",
+            "desc": "Hall bookings, shops and monthly tenants",
             "native_label": n.get("rentals", ""),
         },
         {

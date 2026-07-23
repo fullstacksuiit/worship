@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == "add" %}Record rent received{% else %}Edit payment{% endif %} · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-2xl px-4 pb-28 pt-6 sm:px-6 lg:pb-16 lg:pt-9{% endblock %}
+
+{% block breadcrumb %}
+  {% if booking %}
+    <a href="{% url 'rentals:detail' booking.pk %}" class="back-link">← Back to booking</a>
+  {% else %}
+    <a href="{% url 'rentals:tenancy_detail' tenancy.pk %}" class="back-link">← Back to the account</a>
+  {% endif %}
+{% endblock %}
+{% block page_icon %}💰{% endblock %}
+{% block page_title %}{% if mode == "add" %}Rent received{% else %}Edit payment{% endif %}{% endblock %}
+{% block page_sub %}This goes into Money as income too — record it once, and the books are right{% endblock %}
+
+{% block content %}
+{% if booking %}
+  <div class="card card-pad animate-rise mb-5 flex items-center gap-4">
+    <span class="emblem emblem-md">{{ booking.property.icon }}</span>
+    <div class="min-w-0 flex-1">
+      <p class="truncate font-semibold">{{ booking.property.name }}</p>
+      <p class="mt-0.5 truncate text-sm text-sand-600">
+        👤 {{ booking.renter_name }} · 📆 {{ booking.start_date|date:"j M Y" }}
+      </p>
+    </div>
+    <div class="shrink-0 text-right">
+      <p class="kv-key">Still to collect</p>
+      <p class="mt-1 font-bold {% if outstanding %}text-red-600{% else %}money-in{% endif %}">
+        {{ org.currency_symbol }}{{ outstanding|default:0|floatformat:"-2" }}
+      </p>
+      <p class="mt-0.5 text-xs text-sand-500">of {{ booking.rent_display }}</p>
+    </div>
+  </div>
+{% endif %}
+
+<form method="post" class="card card-pad animate-rise">
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+      <span>⚠️</span><span>{{ form.non_field_errors|striptags }}</span>
+    </div>
+  {% endif %}
+
+  <div class="space-y-5">
+    {% if form.charge %}{% include "partials/_field.html" with field=form.charge %}{% endif %}
+
+    <div class="grid gap-5 sm:grid-cols-2">
+      <div class="field">
+        <label class="field-label" for="{{ form.amount.id_for_label }}">
+          {{ form.amount.label }} <span class="text-sand-500">({{ org.currency_symbol }})</span>
+        </label>
+        {{ form.amount }}
+        <p class="field-help">{{ form.amount.help_text }}</p>
+        {% if form.amount.errors %}<p class="field-error"><span>⚠</span><span>{{ form.amount.errors|striptags }}</span></p>{% endif %}
+      </div>
+      {% include "partials/_field.html" with field=form.date %}
+    </div>
+
+    <div class="grid gap-5 sm:grid-cols-2">
+      {% include "partials/_field.html" with field=form.method %}
+      {% include "partials/_field.html" with field=form.reference %}
+    </div>
+
+    {% include "partials/_field.html" with field=form.note %}
+  </div>
+
+  <div class="mt-7 flex flex-wrap gap-3 border-t border-sand-100 pt-5">
+    <button type="submit" class="btn btn-primary">
+      {% if mode == "add" %}✅ Record payment{% else %}Save changes{% endif %}
+    </button>
+    <a href="{% if booking %}{% url 'rentals:detail' booking.pk %}{% else %}{% url 'rentals:tenancy_detail' tenancy.pk %}{% endif %}" class="btn btn-ghost">Cancel</a>
+  </div>
+</form>
+{% endblock %}

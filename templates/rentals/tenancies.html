@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Tenants · {{ org.name }}{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'rentals:list' %}" class="back-link">← Back to rentals</a>{% endblock %}
+{% block page_icon %}🏪{% endblock %}
+{% block page_title %}Tenants{% endblock %}
+{% block page_sub %}Units let by the month, and what each tenant owes{% endblock %}
+{% block page_actions %}
+  {% if caps.manage_rentals %}<a href="{% url 'rentals:tenancy_add' %}" class="btn btn-primary">＋ Add tenant</a>{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if rows or vacant %}
+
+  {% comment %}The arrears figure first, because it's the one thing anybody
+  opens this screen to find out.{% endcomment %}
+  <div class="grid gap-4 sm:grid-cols-3">
+    <div class="card card-pad animate-rise">
+      <p class="kv-key">Outstanding</p>
+      <p class="mt-2 text-2xl font-bold {% if arrears %}text-red-600{% else %}text-clay-700{% endif %} sm:text-3xl">
+        {{ org.currency_symbol }}{{ arrears|floatformat:"-2" }}
+      </p>
+      <p class="mt-1 text-sm text-sand-600">
+        {% if owing %}
+          from {{ owing|length }} tenant{{ owing|length|pluralize }}
+        {% else %}
+          everyone is square 🎉
+        {% endif %}
+      </p>
+    </div>
+    <div class="card card-pad animate-rise">
+      <p class="kv-key">Rent a month</p>
+      <p class="mt-2 text-2xl font-bold sm:text-3xl">{{ org.currency_symbol }}{{ monthly|floatformat:"-2" }}</p>
+      <p class="mt-1 text-sm text-sand-600">across {{ rows|length }} occupied unit{{ rows|length|pluralize }}</p>
+    </div>
+    <div class="card card-pad animate-rise">
+      <p class="kv-key">Empty units</p>
+      <p class="mt-2 text-2xl font-bold sm:text-3xl">{{ vacant|length }}</p>
+      <p class="mt-1 text-sm text-sand-600">
+        {% if vacant %}waiting for a tenant{% else %}all let out{% endif %}
+      </p>
+    </div>
+  </div>
+
+  {% if rows %}
+    <section class="mt-9">
+      <h2 class="section-title"><span>🧾</span> Rent accounts</h2>
+      <div class="space-y-2.5">
+        {% for row in rows %}
+          <a href="{% url 'rentals:tenancy_detail' row.tenancy.pk %}" class="card-link flex items-center gap-4 p-4">
+            <span class="emblem emblem-md">🏪</span>
+            <span class="min-w-0 flex-1">
+              <span class="block truncate font-semibold">{{ row.unit.name }}</span>
+              <span class="mt-0.5 block truncate text-sm text-sand-600">
+                👤 {{ row.tenancy.tenant_name }}{% if row.tenancy.tenant_phone %} · {{ row.tenancy.tenant_phone }}{% endif %}
+              </span>
+              <span class="mt-0.5 block truncate text-xs text-sand-500">
+                📆 {{ row.tenancy.period_display }} · {{ row.tenancy.rent_display }}
+              </span>
+            </span>
+            <span class="shrink-0 text-right">
+              {% if row.ledger.outstanding > 0 %}
+                <span class="block font-semibold text-red-600">
+                  {{ org.currency_symbol }}{{ row.ledger.outstanding|floatformat:"-2" }}
+                </span>
+                <span class="badge badge-danger mt-1">
+                  {{ row.ledger.unpaid|length }} month{{ row.ledger.unpaid|length|pluralize }} due
+                </span>
+              {% elif row.ledger.outstanding < 0 %}
+                <span class="block font-semibold text-clay-700">
+                  {{ org.currency_symbol }}{{ row.ledger.outstanding|floatformat:"-2"|cut:"-" }}
+                </span>
+                <span class="badge badge-accent mt-1">paid ahead</span>
+              {% else %}
+                <span class="badge badge-accent mt-1">✅ clear</span>
+              {% endif %}
+            </span>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% if vacant %}
+    <section class="mt-9">
+      <h2 class="section-title text-sand-600"><span>🔑</span> Empty units</h2>
+      <div class="grid gap-4 sm:grid-cols-2">
+        {% for unit in vacant %}
+          <div class="card card-pad flex items-center gap-4">
+            <span class="emblem emblem-md">🏪</span>
+            <div class="min-w-0 flex-1">
+              <p class="truncate font-semibold">{{ unit.name }}</p>
+              <p class="mt-0.5 text-sm text-sand-600">{{ unit.rate_display }}</p>
+            </div>
+            {% if caps.manage_rentals %}
+              <a href="{% url 'rentals:tenancy_add' %}" class="btn btn-sm btn-ghost shrink-0">＋ Tenant</a>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+{% else %}
+  <div class="empty">
+    <span class="text-4xl">🏪</span>
+    <p class="mt-3 font-semibold">No units let by the month yet</p>
+    <p class="mt-1 max-w-sm text-sm text-sand-600">
+      {% if has_units %}
+        You have units set aside for monthly tenants — put a tenant in one and
+        the rent starts charging itself, month by month.
+      {% else %}
+        A shop or room let to one tenant every month goes here. Add it under
+        Properties as “let to one tenant, monthly”, then put the tenant in it.
+      {% endif %}
+    </p>
+    {% if caps.manage_rentals %}
+      <a href="{% if has_units %}{% url 'rentals:tenancy_add' %}{% else %}{% url 'rentals:property_add' %}{% endif %}"
+         class="btn btn-primary mt-5">
+        {% if has_units %}＋ Add a tenant{% else %}＋ Add a unit{% endif %}
+      </a>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

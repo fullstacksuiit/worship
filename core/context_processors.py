@@ -1,5 +1,5 @@
 from .navigation import visible_modules
-from .permissions import get_role, user_caps
+from .permissions import DERIVED_CAPABILITIES, get_role, user_caps
 
 
 def organization(request):
@@ -29,6 +29,11 @@ def capabilities(request):
             "manage_notices": "manage_notices" in caps,
             "manage_rentals": "manage_rentals" in caps,
             "manage_categories": "manage_categories" in caps,
+            # Jobs either of two roles may do — see DERIVED_CAPABILITIES.
+            **{
+                name: bool(caps & needed)
+                for name, needed in DERIVED_CAPABILITIES.items()
+            },
         },
     }
 

@@ -1,0 +1,169 @@
+{% load faith %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Slip{% endblock %} · {{ org.name }}</title>
+  <style>
+    /* Self-contained on purpose: a slip has to print cleanly on a laptop that
+       may have no network, so it carries its own type and colour rather than
+       leaning on the app's stylesheet. The palette is the app's warm sand/clay. */
+    :root {
+      --ink: #2b2620; --muted: #7c7161; --faint: #a89c88;
+      --line: #ece3d4; --paper: #fffdf9; --sand: #f6f0e6;
+      --clay: #b45f3f; --gold: #b98529; --green: #3f7d4f; --red: #b4413f;
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body {
+      margin: 0; background: #ece3d3; color: var(--ink);
+      font-family: "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif;
+      font-size: 14px; line-height: 1.55;
+    }
+    a { color: var(--clay); }
+
+    .toolbar {
+      max-width: 800px; margin: 22px auto 0; padding: 0 18px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 16px; border-radius: 10px; border: 1px solid var(--line);
+      background: #fff; color: var(--ink); font-size: 13px; font-weight: 600;
+      text-decoration: none; cursor: pointer;
+    }
+    .btn-print { background: var(--clay); border-color: var(--clay); color: #fff; }
+
+    .sheet {
+      max-width: 800px; margin: 16px auto 44px; background: var(--paper);
+      border: 1px solid var(--line); border-radius: 18px; overflow: hidden;
+      box-shadow: 0 12px 34px rgba(70, 50, 25, .12);
+    }
+    .sheet-head {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 20px; padding: 26px 30px; border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, var(--sand), var(--paper));
+    }
+    .brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .emblem {
+      flex: none; width: 52px; height: 52px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; background: #fff; border: 1px solid var(--line);
+    }
+    .org-name { font-size: 20px; font-weight: 800; line-height: 1.2; }
+    .org-sub { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+    .doc-title { text-align: right; flex: none; }
+    .doc-kind {
+      font-size: 12px; font-weight: 800; letter-spacing: .13em;
+      text-transform: uppercase; color: var(--clay);
+    }
+    .doc-meta { color: var(--muted); font-size: 12.5px; margin-top: 3px; }
+
+    .sheet-body { padding: 26px 30px; }
+    .parties {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 18px 26px;
+      margin-bottom: 24px;
+    }
+    .label {
+      font-size: 10.5px; font-weight: 700; letter-spacing: .09em;
+      text-transform: uppercase; color: var(--faint); margin-bottom: 3px;
+    }
+    .value { font-size: 14.5px; }
+    .value strong { font-weight: 700; }
+
+    table.lines { width: 100%; border-collapse: collapse; margin: 6px 0 4px; }
+    table.lines th, table.lines td {
+      padding: 10px 12px; text-align: left; font-size: 13.5px;
+      border-bottom: 1px solid var(--line);
+    }
+    table.lines thead th {
+      font-size: 10.5px; font-weight: 700; letter-spacing: .07em;
+      text-transform: uppercase; color: var(--muted); background: var(--sand);
+      border-bottom: 1px solid var(--line);
+    }
+    table.lines .num { text-align: right; white-space: nowrap; }
+    table.lines tfoot td {
+      font-weight: 800; font-size: 15px; border-bottom: none;
+      border-top: 2px solid var(--ink); padding-top: 14px;
+    }
+    .settled { color: var(--faint); }
+
+    .grand {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      gap: 20px; flex-wrap: wrap; margin-top: 22px; padding: 18px 20px;
+      background: var(--sand); border: 1px solid var(--line); border-radius: 14px;
+    }
+    .grand-label { font-size: 12px; font-weight: 700; color: var(--muted);
+      letter-spacing: .05em; text-transform: uppercase; }
+    .grand-amount { font-size: 30px; font-weight: 800; line-height: 1; }
+    .grand .words { color: var(--muted); font-size: 12.5px; margin-top: 6px; max-width: 46ch; }
+    .amount-due { color: var(--red); }
+    .amount-clear { color: var(--green); }
+
+    .note {
+      margin-top: 22px; padding: 13px 16px; font-size: 12.5px; color: var(--muted);
+      background: #fff; border: 1px dashed var(--line); border-radius: 12px;
+    }
+    .sign {
+      display: flex; justify-content: flex-end; margin-top: 40px;
+    }
+    .sign-box { text-align: center; min-width: 210px; }
+    .sign-line { border-top: 1px solid var(--ink); padding-top: 6px;
+      font-size: 12px; color: var(--muted); }
+
+    .sheet-foot {
+      padding: 16px 30px; border-top: 1px solid var(--line);
+      color: var(--faint); font-size: 11.5px; text-align: center;
+      background: var(--sand);
+    }
+
+    @media (max-width: 560px) {
+      .parties { grid-template-columns: 1fr; }
+      .sheet-head { flex-direction: column; }
+      .doc-title { text-align: left; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .no-print { display: none !important; }
+      .sheet {
+        max-width: none; margin: 0; border: none; border-radius: 0;
+        box-shadow: none;
+      }
+      @page { margin: 14mm; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar no-print">
+    <a class="btn" href="{{ back_url }}">← Back</a>
+    <button type="button" class="btn btn-print" onclick="window.print()">🖨 Print / Save as PDF</button>
+  </div>
+
+  <div class="sheet">
+    <header class="sheet-head">
+      <div class="brand">
+        <span class="emblem">{{ org.icon }}</span>
+        <div>
+          <div class="org-name">{{ org.name }}</div>
+          <div class="org-sub">
+            {% term org "place_term" %}{% if org.city %} · {{ org.city }}{% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="doc-title">
+        <div class="doc-kind">{% block doc_kind %}Slip{% endblock %}</div>
+        <div class="doc-meta">{% block doc_meta %}{% endblock %}</div>
+      </div>
+    </header>
+
+    <div class="sheet-body">
+      {% block slip_body %}{% endblock %}
+    </div>
+
+    <footer class="sheet-foot">
+      {% block slip_foot %}Generated {{ today|date:"j M Y" }} · {{ org.name }}{% endblock %}
+    </footer>
+  </div>
+</body>
+</html>

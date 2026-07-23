@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Remove {{ tenancy.tenant_name }}? · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-md px-4 py-12 sm:py-16{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% block content %}
+{% url 'rentals:tenancy_detail' tenancy.pk as cancel_url %}
+{% with what=tenancy.property.name|add:" · "|add:tenancy.tenant_name %}
+  {% include "partials/_confirm_card.html" with cancel_url=cancel_url heading="Remove this tenant?" note=what %}
+{% endwith %}
+
+<div class="panel mt-5 text-sm leading-relaxed text-sand-700">
+  <p class="font-semibold">This takes the whole rent account with it:</p>
+  <ul class="mt-2 space-y-1">
+    <li>· {{ ledger.charges|length }} month{{ ledger.charges|length|pluralize }} charged, {{ org.currency_symbol }}{{ ledger.charged|floatformat:"-2" }} in all</li>
+    <li>· {{ org.currency_symbol }}{{ ledger.paid|floatformat:"-2" }} received — <strong>and those income rows in Money</strong></li>
+    {% if ledger.outstanding > 0 %}
+      <li class="font-semibold text-red-600">· {{ org.currency_symbol }}{{ ledger.outstanding|floatformat:"-2" }} still owed, which stops being on record anywhere</li>
+    {% endif %}
+  </ul>
+</div>
+
+<p class="mt-4 text-center text-sm text-sand-600">
+  Only removing a tenant added by mistake? If they simply left, use
+  <strong>“Tenant moved out”</strong> instead — the account and its history stay.
+</p>
+{% endblock %}

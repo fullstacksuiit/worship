@@ -1,0 +1,92 @@
+{% extends "rentals/slips/_slip_base.html" %}
+
+{% block title %}Rent demand · {{ tenancy.tenant_name }}{% endblock %}
+{% block doc_kind %}Rent Demand{% endblock %}
+{% block doc_meta %}As on {{ today|date:"j M Y" }}{% endblock %}
+
+{% block slip_body %}
+  <div class="parties">
+    <div>
+      <div class="label">Tenant</div>
+      <div class="value">
+        <strong>{{ tenancy.tenant_name }}</strong>
+        {% if tenancy.tenant_phone %}<br>{{ tenancy.tenant_phone }}{% endif %}
+      </div>
+    </div>
+    <div>
+      <div class="label">Unit</div>
+      <div class="value">
+        <strong>{{ tenancy.property.name }}</strong>
+        {% if tenancy.property.category %}<br>{{ tenancy.property.category.name }}{% endif %}
+      </div>
+    </div>
+    <div>
+      <div class="label">Rent</div>
+      <div class="value">{{ tenancy.rent_display }}</div>
+    </div>
+    <div>
+      <div class="label">Tenancy</div>
+      <div class="value">{{ tenancy.period_display }}</div>
+    </div>
+  </div>
+
+  {% if unpaid %}
+    <table class="lines">
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th class="num">Rent</th>
+          <th class="num">Received</th>
+          <th class="num">Due</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for charge in unpaid %}
+          <tr>
+            <td>
+              {{ charge.label }}
+              {% if charge.kind == "opening" %}<br><span class="settled" style="font-size:11.5px">brought forward</span>{% endif %}
+            </td>
+            <td class="num">{{ charge.amount_display }}</td>
+            <td class="num">{% if charge.paid %}{{ charge.paid_display }}{% else %}—{% endif %}</td>
+            <td class="num">{{ charge.due_display }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3">Total outstanding</td>
+          <td class="num">{{ total_due_display }}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="grand">
+      <div>
+        <div class="grand-label">Amount payable</div>
+        <div class="words">{{ amount_words }}</div>
+      </div>
+      <div class="grand-amount amount-due">{{ total_due_display }}</div>
+    </div>
+
+    <div class="note">
+      Please clear the outstanding rent at your earliest convenience. This slip
+      lists rent charged up to the last completed month; the current month is
+      raised once it ends.
+    </div>
+  {% else %}
+    <div class="grand">
+      <div>
+        <div class="grand-label">Outstanding</div>
+        <div class="words">No rent is due — the account is fully settled. Thank you.</div>
+      </div>
+      <div class="grand-amount amount-clear">{{ total_due_display }}</div>
+    </div>
+  {% endif %}
+
+  <div class="sign">
+    <div class="sign-box">
+      <div class="sign-line">For {{ org.name }}</div>
+    </div>
+  </div>
+{% endblock %}

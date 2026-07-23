@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Remove payment? · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-md px-4 py-12 sm:py-16{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% block content %}
+{% if payment.tenancy %}
+  {% url 'rentals:tenancy_detail' payment.tenancy.pk as cancel_url %}
+{% else %}
+  {% url 'rentals:detail' payment.booking.pk as cancel_url %}
+{% endif %}
+{% with what=payment.amount_display|add:" · "|add:payment.paid_for %}
+  {% include "partials/_confirm_card.html" with cancel_url=cancel_url heading="Remove this payment?" note=what %}
+{% endwith %}
+<p class="mt-4 text-center text-sm text-sand-600">
+  Its income row in Money goes with it, and the month goes back to owing what it
+  owed. Correcting a wrong figure? <strong>Edit</strong> the payment instead —
+  Money is corrected along with it.
+</p>
+{% endblock %}

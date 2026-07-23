@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% block title %}{{ tenancy.tenant_name }} · {{ tenancy.property.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-3xl px-4 pb-28 pt-6 sm:px-6 lg:pb-16 lg:pt-9{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% block content %}
+<a href="{% url 'rentals:tenancy_list' %}" class="back-link">← Back to tenants</a>
+
+<div class="card animate-rise mt-3 overflow-hidden">
+  <div class="border-b border-sand-100 bg-gradient-to-b from-sand-50 to-white px-5 py-6 sm:px-6">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="flex min-w-0 items-start gap-4">
+        <span class="emblem emblem-lg">🏪</span>
+        <div class="min-w-0">
+          <h1 class="text-2xl font-bold">{{ tenancy.property.name }}</h1>
+          <p class="mt-1 text-sm text-sand-600">
+            👤 {{ tenancy.tenant_name }}{% if tenancy.tenant_phone %} · <a href="tel:{{ tenancy.tenant_phone }}" class="link">{{ tenancy.tenant_phone }}</a>{% endif %}
+          </p>
+          <p class="mt-2 flex flex-wrap items-center gap-2">
+            {% if tenancy.is_running %}
+              <span class="badge badge-accent">{{ tenancy.period_display }}</span>
+            {% else %}
+              <span class="badge badge-neutral">Moved out · {{ tenancy.period_display }}</span>
+            {% endif %}
+            <span class="badge badge-neutral">{{ tenancy.rent_display }}</span>
+          </p>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <a href="{% url 'rentals:rent_demand' tenancy.pk %}" target="_blank" rel="noopener" class="btn btn-sm btn-ghost">🧾 Rent slip</a>
+        {% if caps.manage_rentals %}
+          <a href="{% url 'rentals:tenancy_edit' tenancy.pk %}" class="btn btn-sm btn-ghost">✏️ Edit</a>
+          <a href="{% url 'rentals:tenancy_delete' tenancy.pk %}" class="btn btn-sm btn-danger-ghost">Delete</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% comment %}The three figures the account comes down to. "Outstanding" is
+  the one people mean when they ask how much the shop owes.{% endcomment %}
+  <dl class="grid gap-5 p-5 sm:grid-cols-3 sm:p-6">
+    <div>
+      <dt class="kv-key">Charged</dt>
+      <dd class="kv-val text-lg">{{ org.currency_symbol }}{{ ledger.charged|floatformat:"-2" }}</dd>
+    </div>
+    <div>
+      <dt class="kv-key">Received</dt>
+      <dd class="kv-val money-in text-lg">{{ org.currency_symbol }}{{ ledger.paid|floatformat:"-2" }}</dd>
+    </div>
+    <div>
+      <dt class="kv-key">Outstanding</dt>
+      <dd class="kv-val text-lg {% if ledger.outstanding > 0 %}text-red-600{% elif ledger.outstanding < 0 %}money-in{% endif %}">
+        {% if ledger.outstanding < 0 %}
+          {{ org.currency_symbol }}{{ ledger.outstanding|floatformat:"-2"|cut:"-" }}
+          <span class="block text-sm font-normal text-sand-600">paid ahead</span>
+        {% else %}
+          {{ org.currency_symbol }}{{ ledger.outstanding|floatformat:"-2" }}
+        {% endif %}
+      </dd>
+    </div>
+  </dl>
+
+  <dl class="grid gap-5 border-t border-sand-100 p-5 sm:grid-cols-3 sm:p-6">
+    <div>
+      <dt class="kv-key">Deposit held</dt>
+      <dd class="kv-val">{{ tenancy.deposit_display }}</dd>
+    </div>
+    <div>
+      <dt class="kv-key">{{ org.preset.member_term }}</dt>
+      <dd class="kv-val">
+        {% if tenancy.member %}<a href="{% url 'members:detail' tenancy.member.pk %}" class="link">{{ tenancy.member.name }}</a>{% else %}—{% endif %}
+      </dd>
+    </div>
+    <div>
+      <dt class="kv-key">Unit</dt>
+      <dd class="kv-val">
+        <a href="{% url 'rentals:property_list' %}" class="link">{{ tenancy.property.name }}</a>
+        {% if tenancy.property.category %}<span class="block text-sm font-normal text-sand-600">{{ tenancy.property.category.name }}</span>{% endif %}
+      </dd>
+    </div>
+  </dl>
+
+  {% if tenancy.notes %}
+    <div class="px-5 pb-5 sm:px-6 sm:pb-6">
+      <div class="panel whitespace-pre-line text-sm leading-relaxed">{{ tenancy.notes }}</div>
+    </div>
+  {% endif %}
+
+  {% if caps.manage_rentals and tenancy.is_running %}
+    <div class="flex flex-wrap gap-3 border-t border-sand-100 bg-sand-50/60 p-5 sm:p-6">
+      <form method="post" action="{% url 'rentals:tenancy_end' tenancy.pk %}"
+            onsubmit="return confirm('Move {{ tenancy.tenant_name|escapejs }} out today? The account stays, arrears and all — only new months stop.');">{% csrf_token %}
+        <button class="btn btn-ghost">🔑 Tenant moved out</button>
+      </form>
+    </div>
+  {% endif %}
+</div>
+
+{% if tenancy.monthly_rent <= 0 %}
+  <div class="mt-6 flex items-start gap-2.5 rounded-2xl border border-clay-200 bg-clay-50/70 px-4 py-3 text-sm text-clay-800">
+    <span>💡</span>
+    <span>
+      No rent set for this tenant, so no months are being charged.
+      {% if caps.manage_rentals %}
+        <a href="{% url 'rentals:tenancy_edit' tenancy.pk %}" class="link">Set the monthly rent</a>
+        and every month since {{ tenancy.start_date|date:"M Y" }} is raised for you.
+      {% endif %}
+    </span>
+  </div>
+{% endif %}
+
+{% if form %}
+  <section class="mt-9 scroll-mt-24" id="pay">
+    <h2 class="section-title"><span>💰</span> Record rent received</h2>
+    <form method="post" action="{% url 'rentals:payment_add' tenancy.pk %}" class="card card-pad">
+      {% csrf_token %}
+      <p class="mb-5 text-sm text-sand-600">
+        Every payment recorded here is added to Money as income, so the books
+        and the rent account never drift apart.
+      </p>
+
+      {% if form.non_field_errors %}
+        <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <span>⚠️</span><span>{{ form.non_field_errors|striptags }}</span>
+        </div>
+      {% endif %}
+
+      <div class="space-y-5">
+        {% include "partials/_field.html" with field=form.charge %}
+        <div class="grid gap-5 sm:grid-cols-2">
+          <div class="field">
+            <label class="field-label" for="{{ form.amount.id_for_label }}">
+              {{ form.amount.label }} <span class="text-sand-500">({{ org.currency_symbol }})</span>
+            </label>
+            {{ form.amount }}
+            <p class="field-help">{{ form.amount.help_text }}</p>
+            {% if form.amount.errors %}<p class="field-error"><span>⚠</span><span>{{ form.amount.errors|striptags }}</span></p>{% endif %}
+          </div>
+          {% include "partials/_field.html" with field=form.date %}
+        </div>
+        <div class="grid gap-5 sm:grid-cols-2">
+          {% include "partials/_field.html" with field=form.method %}
+          {% include "partials/_field.html" with field=form.reference %}
+        </div>
+        {% include "partials/_field.html" with field=form.note %}
+      </div>
+
+      <div class="mt-7 border-t border-sand-100 pt-5">
+        <button type="submit" class="btn btn-primary">✅ Record payment</button>
+      </div>
+    </form>
+  </section>
+{% endif %}
+
+<section class="mt-9">
+  <h2 class="section-title"><span>📒</span> The account, month by month</h2>
+  {% if ledger.charges %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th class="text-right">Charged</th>
+            <th class="text-right">Received</th>
+            <th class="text-right">Balance</th>
+            <th class="text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for charge in ledger.charges %}
+            <tr class="{% if charge.is_settled %}text-sand-500{% endif %}">
+              <td class="whitespace-nowrap font-medium">
+                {{ charge.label }}
+                {% if charge.kind == "opening" %}
+                  <span class="block text-xs font-normal text-sand-500">what was owed when records started</span>
+                {% endif %}
+              </td>
+              <td class="whitespace-nowrap text-right">{{ charge.amount_display }}</td>
+              <td class="whitespace-nowrap text-right {% if charge.paid %}money-in{% endif %}">
+                {% if charge.paid %}{{ org.currency_symbol }}{{ charge.paid|floatformat:"-2" }}{% else %}—{% endif %}
+              </td>
+              <td class="whitespace-nowrap text-right {% if not charge.is_settled %}font-semibold text-red-600{% endif %}">
+                {% if charge.is_settled %}<span class="badge badge-accent">✅ settled</span>{% else %}{{ charge.due_display }}{% endif %}
+              </td>
+              <td class="whitespace-nowrap text-right">
+                {% if not charge.is_settled and caps.record_rent %}
+                  <a href="?month={{ charge.pk }}#pay" class="btn btn-sm btn-quiet">Record</a>
+                {% else %}
+                  <span class="text-sand-300">—</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if ledger.credits %}
+      <p class="mt-3 text-sm text-sand-600">
+        {% for credit in ledger.credits %}
+          💚 {{ credit.amount_display }} carried in as advance ({{ credit.date|date:"j M Y" }}).
+        {% endfor %}
+      </p>
+    {% endif %}
+  {% else %}
+    <div class="empty py-10">
+      <span class="text-4xl">📒</span>
+      <p class="mt-3 font-semibold">Nothing charged yet</p>
+      <p class="mt-1 max-w-sm text-sm text-sand-600">
+        Rent is charged month by month from {{ tenancy.start_date|date:"F Y" }}.
+        The first month appears as soon as it comes round.
+      </p>
+    </div>
+  {% endif %}
+</section>
+
+{% if payments %}
+  <section class="mt-9">
+    <h2 class="section-title"><span>🧾</span> Payments received</h2>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Received</th><th>For</th><th>How</th><th class="text-right">Amount</th><th class="text-right">Actions</th></tr>
+        </thead>
+        <tbody>
+          {% for p in payments %}
+            <tr>
+              <td class="whitespace-nowrap text-sand-600">{{ p.date|date:"j M Y" }}</td>
+              <td>
+                {% if p.charge %}{{ p.charge.label }}{% else %}<span class="text-sand-500">Advance</span>{% endif %}
+                {% if p.note %}<span class="mt-1 block max-w-xs truncate text-xs text-sand-500">{{ p.note }}</span>{% endif %}
+              </td>
+              <td class="text-sand-700">
+                {{ p.get_method_display }}{% if p.reference %} <span class="block text-xs text-sand-500">{{ p.reference }}</span>{% endif %}
+              </td>
+              <td class="whitespace-nowrap text-right money-in">{{ p.amount_display }}</td>
+              <td class="whitespace-nowrap text-right">
+                <a href="{% url 'rentals:payment_receipt' p.pk %}" target="_blank" rel="noopener" class="btn btn-sm btn-quiet">🧾 Receipt</a>
+                {% if not p.is_opening and caps.record_rent %}
+                  <a href="{% url 'rentals:payment_edit' p.pk %}" class="btn btn-sm btn-quiet">Edit</a>
+                  <a href="{% url 'rentals:payment_delete' p.pk %}" class="btn btn-sm btn-quiet !text-red-600 hover:!bg-red-50">Delete</a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Show what the picked month still owes, right under the amount box. Nothing
+  // here is load-bearing: leaving the amount blank posts the same figure, worked
+  // out again by `RentPaymentForm.clean()`.
+  (function () {
+    const month = document.querySelector("[data-month-input]");
+    const amount = document.querySelector("[data-amount-input]");
+    if (!month || !amount) return;
+
+    const hint = amount.parentElement.querySelector(".field-help");
+    const wording = hint ? hint.textContent : "";
+    const symbol = "{{ org.currency_symbol }}";
+    let edited = false;
+    amount.addEventListener("input", () => { edited = true; });
+
+    function draw() {
+      const due = parseFloat(month.selectedOptions[0]?.dataset.due || "0");
+      if (hint) {
+        hint.textContent = due > 0
+          ? `${symbol}${due.toLocaleString("en-IN", { maximumFractionDigits: 2 })} still owed for this month — leave blank to pay it all.`
+          : wording;
+      }
+      if (!edited) amount.placeholder = due > 0 ? due.toFixed(2) : "";
+    }
+
+    month.addEventListener("change", draw);
+    draw();
+  })();
+</script>
+{% endblock %}

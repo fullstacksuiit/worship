@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == "add" %}Add tenant{% else %}Edit tenant{% endif %} · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-2xl px-4 pb-28 pt-6 sm:px-6 lg:pb-16 lg:pt-9{% endblock %}
+
+{% block breadcrumb %}
+  <a href="{% if mode == 'edit' %}{% url 'rentals:tenancy_detail' tenancy.pk %}{% else %}{% url 'rentals:tenancy_list' %}{% endif %}" class="back-link">← Back</a>
+{% endblock %}
+{% block page_icon %}{% if mode == "add" %}🏪{% else %}✏️{% endif %}{% endblock %}
+{% block page_title %}{% if mode == "add" %}Add tenant{% else %}Edit tenant{% endif %}{% endblock %}
+{% block page_sub %}Say what they pay a month once — every month after that charges itself{% endblock %}
+
+{% block content %}
+<form method="post" class="card card-pad animate-rise">
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+      <span>⚠️</span><span>{{ form.non_field_errors|striptags }}</span>
+    </div>
+  {% endif %}
+
+  <div class="space-y-5">
+    {% include "partials/_field.html" with field=form.property %}
+    {% include "partials/_field.html" with field=form.tenant_name %}
+    {% include "partials/_field.html" with field=form.tenant_phone %}
+    {% include "partials/_field.html" with field=form.member %}
+
+    <div class="grid gap-5 sm:grid-cols-2">
+      {% include "partials/_field.html" with field=form.start_date %}
+      {% include "partials/_field.html" with field=form.end_date %}
+    </div>
+
+    <div class="grid gap-5 sm:grid-cols-2">
+      <div class="field">
+        <label class="field-label" for="{{ form.monthly_rent.id_for_label }}">
+          {{ form.monthly_rent.label }} <span class="text-sand-500">({{ org.currency_symbol }})</span>
+        </label>
+        {{ form.monthly_rent }}
+        <p class="field-help" data-rent-hint>{{ form.monthly_rent.help_text }}</p>
+        {% if form.monthly_rent.errors %}<p class="field-error"><span>⚠</span><span>{{ form.monthly_rent.errors|striptags }}</span></p>{% endif %}
+      </div>
+      <div class="field">
+        <label class="field-label" for="{{ form.deposit_paid.id_for_label }}">
+          {{ form.deposit_paid.label }} <span class="text-sand-500">({{ org.currency_symbol }})</span>
+        </label>
+        {{ form.deposit_paid }}
+        <p class="field-help">Refundable security you're holding, if any.</p>
+        {% if form.deposit_paid.errors %}<p class="field-error"><span>⚠</span><span>{{ form.deposit_paid.errors|striptags }}</span></p>{% endif %}
+      </div>
+    </div>
+
+    {% include "partials/_field.html" with field=form.notes %}
+  </div>
+
+  <div class="mt-7 flex flex-wrap gap-3 border-t border-sand-100 pt-5">
+    <button type="submit" class="btn btn-primary">{% if mode == "add" %}Add tenant{% else %}Save changes{% endif %}</button>
+    <a href="{% if mode == 'edit' %}{% url 'rentals:tenancy_detail' tenancy.pk %}{% else %}{% url 'rentals:tenancy_list' %}{% endif %}" class="btn btn-ghost">Cancel</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Fill the rent in from the unit's own rate the moment a unit is picked, the
+  // same way the booking form fills in a booking. Typing over it wins — an old
+  // tenant on an old rent is ordinary, not a mistake. Without JavaScript the
+  // form does the same thing on save, from a blank box.
+  (function () {
+    const unit = document.querySelector("select[name='property']");
+    const rent = document.querySelector("[data-rent-input]");
+    const hint = document.querySelector("[data-rent-hint]");
+    if (!unit || !rent) return;
+
+    const wording = hint ? hint.textContent : "";
+    const symbol = "{{ org.currency_symbol }}";
+    let edited = {% if mode == "edit" %}true{% else %}false{% endif %};
+    rent.addEventListener("input", () => { edited = true; });
+
+    function draw() {
+      const picked = unit.selectedOptions[0];
+      const rate = parseFloat(picked?.dataset.rate || "0");
+      if (!picked?.value) { if (hint) hint.textContent = wording; return; }
+      if (!rate) {
+        if (hint) hint.textContent = "This unit has no rate set — say what this tenant pays a month.";
+        return;
+      }
+      const shown = symbol + rate.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+      if (hint) hint.textContent = `The unit's rate is ${shown} a month. Change it if this tenant pays something else.`;
+      if (!edited) rent.value = rate.toFixed(2);
+    }
+
+    unit.addEventListener("change", draw);
+    draw();
+  })();
+</script>
+{% endblock %}

@@ -17,6 +17,8 @@
       <span class="badge badge-neutral mt-1">cancelled</span>
     {% elif b.is_paid %}
       <span class="badge badge-accent mt-1">paid</span>
+    {% elif b.amount_paid %}
+      <span class="badge badge-gold mt-1">{{ b.balance_display }} left</span>
     {% else %}
       <span class="badge badge-danger mt-1">unpaid</span>
     {% endif %}

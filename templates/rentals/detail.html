@@ -16,11 +16,14 @@
           <p class="mt-1 text-sm text-sand-600">
             👤 {{ booking.renter_name }}{% if booking.renter_phone %} · <a href="tel:{{ booking.renter_phone }}" class="link">{{ booking.renter_phone }}</a>{% endif %}
           </p>
-          <p class="mt-2">
+          <p class="mt-2 flex flex-wrap items-center gap-2">
             {% if booking.is_cancelled %}
               <span class="badge badge-neutral">Cancelled</span>
             {% elif booking.is_paid %}
               <span class="badge badge-accent">✅ Paid</span>
+              {% if booking.paid_untracked %}<span class="badge badge-gold">not in Money</span>{% endif %}
+            {% elif booking.amount_paid %}
+              <span class="badge badge-gold">Part paid · {{ booking.balance_display }} left</span>
             {% else %}
               <span class="badge badge-danger">Payment pending</span>
             {% endif %}
@@ -74,18 +77,65 @@
     </div>
   {% endif %}
 
-  {% if caps.manage_rentals and not booking.is_cancelled %}
+  {% if not booking.is_cancelled %}
     <div class="flex flex-wrap gap-3 border-t border-sand-100 bg-sand-50/60 p-5 sm:p-6">
-      {% if not booking.is_paid %}
-        <form method="post" action="{% url 'rentals:mark_paid' booking.pk %}">{% csrf_token %}
-          <button class="btn btn-accent">✅ Mark as paid</button>
+      {% if caps.record_rent and booking.balance > 0 %}
+        <a href="{% url 'rentals:booking_payment' booking.pk %}" class="btn btn-accent">💰 Rent received</a>
+      {% endif %}
+      {% if caps.manage_rentals %}
+        <form method="post" action="{% url 'rentals:cancel' booking.pk %}"
+              onsubmit="return confirm('Cancel this booking? The dates become free again.');">{% csrf_token %}
+          <button class="btn btn-ghost">Cancel booking</button>
         </form>
       {% endif %}
-      <form method="post" action="{% url 'rentals:cancel' booking.pk %}"
-            onsubmit="return confirm('Cancel this booking? The dates become free again.');">{% csrf_token %}
-        <button class="btn btn-ghost">Cancel booking</button>
-      </form>
     </div>
   {% endif %}
 </div>
+
+{% if booking.paid_untracked %}
+  <div class="mt-6 flex items-start gap-2.5 rounded-2xl border border-gold-200 bg-gold-50/70 px-4 py-3 text-sm text-gold-900">
+    <span>💡</span>
+    <span>
+      This was ticked as paid back when that was all a booking could say, so the
+      rent never reached Money. {% if caps.record_rent %}<a href="{% url 'rentals:booking_payment' booking.pk %}" class="link">Record what came in</a>
+      and it lands in the books on the day it arrived.{% endif %}
+    </span>
+  </div>
+{% endif %}
+
+{% if booking.payments.all %}
+  <section class="mt-9">
+    <h2 class="section-title"><span>🧾</span> Rent received</h2>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Received</th><th>How</th><th class="text-right">Amount</th><th class="text-right">Actions</th></tr>
+        </thead>
+        <tbody>
+          {% for p in booking.payments.all %}
+            <tr>
+              <td class="whitespace-nowrap text-sand-600">{{ p.date|date:"j M Y" }}</td>
+              <td class="text-sand-700">
+                {{ p.get_method_display }}{% if p.reference %} <span class="block text-xs text-sand-500">{{ p.reference }}</span>{% endif %}
+                {% if p.note %}<span class="mt-1 block max-w-xs truncate text-xs text-sand-500">{{ p.note }}</span>{% endif %}
+              </td>
+              <td class="whitespace-nowrap text-right money-in">{{ p.amount_display }}</td>
+              <td class="whitespace-nowrap text-right">
+                <a href="{% url 'rentals:payment_receipt' p.pk %}" target="_blank" rel="noopener" class="btn btn-sm btn-quiet">🧾 Receipt</a>
+                {% if caps.record_rent %}
+                  <a href="{% url 'rentals:payment_edit' p.pk %}" class="btn btn-sm btn-quiet">Edit</a>
+                  <a href="{% url 'rentals:payment_delete' p.pk %}" class="btn btn-sm btn-quiet !text-red-600 hover:!bg-red-50">Delete</a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="mt-3 text-sm text-sand-600">
+      {{ booking.paid_display }} of {{ booking.rent_display }} collected{% if booking.balance > 0 %} · <strong class="text-red-600">{{ booking.balance_display }} still due</strong>{% endif %}.
+      Each one is an income row in <a href="{% url 'finance:ledger' %}" class="link">Money</a>.
+    </p>
+  </section>
+{% endif %}
 {% endblock %}
