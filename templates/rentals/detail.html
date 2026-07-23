@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}{{ booking.property.name }} · {{ booking.renter_name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-3xl px-4 pb-28 pt-6 sm:px-6 lg:pb-16 lg:pt-9{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% block content %}
+<a href="{% url 'rentals:list' %}" class="back-link">← Back to rentals</a>
+
+<div class="card animate-rise mt-3 overflow-hidden">
+  <div class="border-b border-sand-100 bg-gradient-to-b from-sand-50 to-white px-5 py-6 sm:px-6">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="flex min-w-0 items-start gap-4">
+        <span class="emblem emblem-lg">🏛️</span>
+        <div class="min-w-0">
+          <h1 class="text-2xl font-bold">{{ booking.property.name }}</h1>
+          <p class="mt-1 text-sm text-sand-600">
+            👤 {{ booking.renter_name }}{% if booking.renter_phone %} · <a href="tel:{{ booking.renter_phone }}" class="link">{{ booking.renter_phone }}</a>{% endif %}
+          </p>
+          <p class="mt-2">
+            {% if booking.is_cancelled %}
+              <span class="badge badge-neutral">Cancelled</span>
+            {% elif booking.is_paid %}
+              <span class="badge badge-accent">✅ Paid</span>
+            {% else %}
+              <span class="badge badge-danger">Payment pending</span>
+            {% endif %}
+          </p>
+        </div>
+      </div>
+      {% if caps.manage_rentals and not booking.is_cancelled %}
+        <div class="flex gap-2">
+          <a href="{% url 'rentals:edit' booking.pk %}" class="btn btn-sm btn-ghost">✏️ Edit</a>
+          <a href="{% url 'rentals:delete' booking.pk %}" class="btn btn-sm btn-danger-ghost">Delete</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <dl class="grid gap-5 p-5 sm:grid-cols-2 sm:p-6">
+    <div>
+      <dt class="kv-key">Dates</dt>
+      <dd class="kv-val">
+        {{ booking.start_date|date:"j M Y" }} – {{ booking.end_date|date:"j M Y" }}
+        {% if booking.start_time %}<span class="block text-sm font-normal text-sand-600">🕒 {{ booking.start_time|time:"g:i A" }} – {{ booking.end_time|time:"g:i A" }}</span>{% endif %}
+      </dd>
+    </div>
+    <div><dt class="kv-key">Purpose</dt><dd class="kv-val">{{ booking.purpose|default:"—" }}</dd></div>
+    <div>
+      <dt class="kv-key">Rent</dt>
+      <dd class="kv-val text-lg">
+        {{ booking.rent_display }}
+        {% comment %}Show what the rate worked out to whenever the charge went a
+        different way, so a discount is visible instead of just being a number.{% endcomment %}
+        {% if booking.is_adjusted %}
+          <span class="block text-sm font-normal text-sand-600">
+            adjusted from {{ booking.quoted_display }} ({{ booking.property.rate_display }})
+          </span>
+        {% elif booking.property.has_rate %}
+          <span class="block text-sm font-normal text-sand-600">{{ booking.property.rate_display }}</span>
+        {% endif %}
+      </dd>
+    </div>
+    <div>
+      <dt class="kv-key">{{ org.preset.member_term }}</dt>
+      <dd class="kv-val">
+        {% if booking.member %}<a href="{% url 'members:detail' booking.member.pk %}" class="link">{{ booking.member.name }}</a>{% else %}—{% endif %}
+      </dd>
+    </div>
+  </dl>
+
+  {% if booking.notes %}
+    <div class="px-5 pb-5 sm:px-6 sm:pb-6">
+      <div class="panel whitespace-pre-line text-sm leading-relaxed">{{ booking.notes }}</div>
+    </div>
+  {% endif %}
+
+  {% if caps.manage_rentals and not booking.is_cancelled %}
+    <div class="flex flex-wrap gap-3 border-t border-sand-100 bg-sand-50/60 p-5 sm:p-6">
+      {% if not booking.is_paid %}
+        <form method="post" action="{% url 'rentals:mark_paid' booking.pk %}">{% csrf_token %}
+          <button class="btn btn-accent">✅ Mark as paid</button>
+        </form>
+      {% endif %}
+      <form method="post" action="{% url 'rentals:cancel' booking.pk %}"
+            onsubmit="return confirm('Cancel this booking? The dates become free again.');">{% csrf_token %}
+        <button class="btn btn-ghost">Cancel booking</button>
+      </form>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

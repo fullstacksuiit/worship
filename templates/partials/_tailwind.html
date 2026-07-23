@@ -1,0 +1,74 @@
+{% comment %}
+Design tokens for the whole app, in one place.
+
+Tailwind is loaded from the CDN and configured here — the palette is warm and
+tactile (sand + clay), never cold grey. `slate`/`gray`/`neutral`/`zinc` are all
+remapped onto `sand` so a stray cold class still lands warm.
+{% endcomment %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  const SAND = {
+    50: "#fbf8f4", 100: "#f5ede2", 200: "#e9dac6", 300: "#dbc2a4",
+    400: "#c8a479", 500: "#b3885a", 600: "#9a6f47", 700: "#7d583b",
+    800: "#664934", 900: "#54392b", 950: "#31211a",
+  };
+
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          sand: SAND,
+          // Cold palettes are remapped so nothing in the app can turn grey.
+          slate: SAND, gray: SAND, neutral: SAND, zinc: SAND, stone: SAND,
+          // Accent — deep clay-teal. Used for links, positive money, focus.
+          clay: {
+            50: "#f0faf7", 100: "#d8f2ea", 200: "#b0e5d8", 300: "#7fd0be",
+            400: "#4bb39e", 500: "#2a9583", 600: "#1d7768", 700: "#1a5f55",
+            800: "#184c45", 900: "#163f3a",
+          },
+          // Warm highlight — badges, pins, "attention" states.
+          gold: {
+            50: "#fdf8ed", 100: "#f9edd0", 200: "#f1d89e", 300: "#e8bd68",
+            400: "#dfa441", 500: "#d18b2a", 600: "#b26a21", 700: "#8e4e1f",
+            800: "#753f20", 900: "#63351e",
+          },
+        },
+        // `@apply` can only use opacity steps that exist in the scale — unlike
+        // class attributes, it won't invent `/12` on the fly, and one unknown
+        // step throws away the whole stylesheet. These are the tints the
+        // component layer actually uses.
+        opacity: { 8: "0.08", 12: "0.12", 15: "0.15" },
+        fontFamily: {
+          sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+          display: ["Plus Jakarta Sans", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+          // The place's own script. `--native-font` is set per place in the
+          // page head; the fallbacks are the faces phones and laptops already
+          // ship, so the words read correctly even before the font arrives.
+          native: [
+            "var(--native-font)", "Noto Nastaliq Urdu", "Noto Sans Devanagari",
+            "Noto Sans Gurmukhi", "Noto Sans Gujarati", "Noto Sans Hebrew",
+            "Jameel Noori Nastaleeq", "Nirmala UI", "Arial Unicode MS", "sans-serif",
+          ],
+        },
+        boxShadow: {
+          soft: "0 1px 2px rgba(84,57,43,.05), 0 10px 26px -18px rgba(84,57,43,.45)",
+          lift: "0 2px 4px rgba(84,57,43,.06), 0 22px 40px -22px rgba(84,57,43,.55)",
+          ring: "0 0 0 3px rgba(179,136,90,.18)",
+        },
+        borderRadius: { "4xl": "2rem" },
+        keyframes: {
+          "rise": { "0%": { opacity: 0, transform: "translateY(6px)" }, "100%": { opacity: 1, transform: "none" } },
+          "slide-in": { "0%": { transform: "translateX(-100%)" }, "100%": { transform: "none" } },
+        },
+        animation: {
+          rise: "rise .35s cubic-bezier(.22,1,.36,1) both",
+          "slide-in": "slide-in .25s cubic-bezier(.22,1,.36,1) both",
+        },
+      },
+    },
+  };
+</script>

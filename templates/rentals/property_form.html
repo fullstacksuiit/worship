@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == "add" %}Add property{% else %}Edit property{% endif %} · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-2xl px-4 pb-28 pt-6 sm:px-6 lg:pb-16 lg:pt-9{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'rentals:property_list' %}" class="back-link">← Back to properties</a>{% endblock %}
+{% block page_icon %}{% if mode == "add" %}🏠{% else %}✏️{% endif %}{% endblock %}
+{% block page_title %}{% if mode == "add" %}Add a property{% else %}Edit {{ property.name }}{% endif %}{% endblock %}
+{% block page_sub %}Set the rate once here and every booking fills itself in{% endblock %}
+
+{% block content %}
+<form method="post" class="card card-pad animate-rise">
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+      <span>⚠️</span><span>{{ form.non_field_errors|striptags }}</span>
+    </div>
+  {% endif %}
+
+  <div class="space-y-5">
+    {% include "partials/_field.html" with field=form.name %}
+    {% include "partials/_field.html" with field=form.category %}
+
+    {% comment %}Mode is the fork the whole module turns on, so it gets picked
+    as two described cards rather than a dropdown you have to interpret.{% endcomment %}
+    <div class="field">
+      <label class="field-label">{{ form.rental_mode.label }}</label>
+      <div class="grid gap-3 sm:grid-cols-2" data-mode-cards>
+        {% for radio in form.rental_mode %}
+          <label class="block">
+            {{ radio.tag }}
+            <span class="choice-card">
+              <span class="block text-xl">{% if radio.data.value == "tenancy" %}🏪{% else %}🏛️{% endif %}</span>
+              <span class="mt-1 block font-semibold">{{ radio.choice_label }}</span>
+              <span class="mt-0.5 block text-xs leading-relaxed text-sand-500">
+                {% if radio.data.value == "tenancy" %}Shops and units — same tenant, rent every month.
+                {% else %}Halls and grounds — a different renter each time.{% endif %}
+              </span>
+            </span>
+          </label>
+        {% endfor %}
+      </div>
+      {% if form.rental_mode.errors %}<p class="field-error"><span>⚠</span><span>{{ form.rental_mode.errors|striptags }}</span></p>{% endif %}
+    </div>
+
+    <div class="grid gap-5 sm:grid-cols-2">
+      <div class="field">
+        <label class="field-label" for="{{ form.rate.id_for_label }}">
+          {{ form.rate.label }} <span class="text-sand-500">({{ org.currency_symbol }})</span>
+        </label>
+        {{ form.rate }}
+        {% if form.rate.errors %}<p class="field-error"><span>⚠</span><span>{{ form.rate.errors|striptags }}</span></p>{% endif %}
+      </div>
+      {% include "partials/_field.html" with field=form.rate_basis %}
+    </div>
+
+    <p class="rounded-xl border border-clay-200 bg-clay-50/60 px-4 py-3 text-sm font-medium text-clay-800"
+       data-rate-preview>🧮 Set a rate to see how it reads.</p>
+
+    {% include "partials/_field.html" with field=form.deposit_amount %}
+
+    {% comment %}A shop's account almost never starts at zero — the tenant has
+    been in the unit for years and is either behind or paid ahead. Shown only
+    for a monthly tenancy; a hall settles each booking on its own.{% endcomment %}
+    <div class="rounded-2xl border border-sand-200 bg-sand-50/50 p-4"
+         data-tenancy-only {% if form.rental_mode.value != "tenancy" %}hidden{% endif %}>
+      <p class="flex items-center gap-2 font-display text-sm font-bold text-sand-800">
+        <span>📒</span> Where this tenant's account stands
+      </p>
+      <p class="mt-1 text-xs leading-relaxed text-sand-500">
+        Was the tenant behind on rent — or paid ahead — on the day you started
+        keeping records here? Put it in once and the account starts off true.
+      </p>
+
+      <div class="mt-4 grid gap-5 sm:grid-cols-2">
+        <div class="field">
+          <label class="field-label" for="{{ form.opening_balance.id_for_label }}">
+            {{ form.opening_balance.label }} <span class="text-sand-500">({{ org.currency_symbol }})</span>
+          </label>
+          {{ form.opening_balance }}
+          <p class="field-help">{{ form.opening_balance.help_text }}</p>
+          {% if form.opening_balance.errors %}<p class="field-error"><span>⚠</span><span>{{ form.opening_balance.errors|striptags }}</span></p>{% endif %}
+        </div>
+        {% include "partials/_field.html" with field=form.opening_balance_date %}
+      </div>
+
+      <p class="mt-4 rounded-xl border border-clay-200 bg-clay-50/60 px-4 py-3 text-sm font-medium text-clay-800"
+         data-opening-preview hidden></p>
+    </div>
+
+    {% include "partials/_field.html" with field=form.description %}
+    {% include "partials/_field.html" with field=form.is_active %}
+  </div>
+
+  <div class="mt-7 flex flex-wrap gap-3 border-t border-sand-100 pt-5">
+    <button type="submit" class="btn btn-primary">Save property</button>
+    <a href="{% url 'rentals:property_list' %}" class="btn btn-ghost">Cancel</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Keep the price readable while it's being typed, and keep mode and basis
+  // agreeing: a monthly tenant can only be priced per month.
+  (function () {
+    const rate = document.querySelector("[data-rate-input]");
+    const basis = document.querySelector("[data-basis-input]");
+    const preview = document.querySelector("[data-rate-preview]");
+    const modes = document.querySelectorAll("[data-mode-input]");
+    if (!rate || !basis || !preview) return;
+
+    const symbol = "{{ org.currency_symbol }}";
+    const monthly = () => document.querySelector("[data-mode-input]:checked")?.value === "tenancy";
+    const amount = (n) => symbol + n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+
+    // The carried-in account: only a monthly tenant has one, and a minus sign
+    // in front of money gets misread, so say the direction out loud instead.
+    const opening = document.querySelector("[data-opening-input]");
+    const openingBox = document.querySelector("[data-tenancy-only]");
+    const openingPreview = document.querySelector("[data-opening-preview]");
+
+    function drawOpening() {
+      if (openingBox) openingBox.hidden = !monthly();
+      if (!openingPreview || !opening) return;
+      const value = parseFloat(opening.value);
+      openingPreview.hidden = !value;
+      if (!value) return;
+      openingPreview.textContent = value > 0
+        ? `🧾 Starts ${amount(value)} in arrears — the tenant owes this much before any new rent.`
+        : `🧾 Starts ${amount(-value)} paid in advance — held as credit against rent to come.`;
+    }
+
+    function syncBasis() {
+      // Per-month belongs to a tenancy and nothing else.
+      for (const option of basis.options) {
+        const monthOnly = option.value === "month";
+        option.hidden = monthly() ? !monthOnly : monthOnly;
+        option.disabled = option.hidden;
+      }
+      if (basis.selectedOptions[0]?.disabled) {
+        basis.value = monthly() ? "month" : "day";
+      }
+    }
+
+    function draw() {
+      const value = parseFloat(rate.value);
+      if (!value || value <= 0) {
+        preview.textContent = "🧮 No rate set — you'll type the amount on each booking.";
+        return;
+      }
+      const per = basis.selectedOptions[0]?.text || "";
+      const shown = amount(value);
+      preview.textContent = monthly()
+        ? `🧮 ${shown} ${per} — due from the tenant every month.`
+        : `🧮 ${shown} ${per} — a booking's rent fills in from this.`;
+    }
+
+    modes.forEach((m) => m.addEventListener("change", () => { syncBasis(); draw(); drawOpening(); }));
+    rate.addEventListener("input", draw);
+    basis.addEventListener("change", draw);
+    opening?.addEventListener("input", drawOpening);
+    syncBasis();
+    draw();
+    drawOpening();
+  })();
+</script>
+{% endblock %}

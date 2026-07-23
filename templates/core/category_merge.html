@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Merge {{ category.name }} · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-2xl px-4 pb-28 pt-6 sm:px-6 lg:pb-16 lg:pt-9{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'core:category_list' %}" class="back-link">← Back to categories</a>{% endblock %}
+{% block page_icon %}🔗{% endblock %}
+{% block page_title %}Merge “{{ category.name }}”{% endblock %}
+{% block page_sub %}Everything filed under it moves to the label you pick{% endblock %}
+
+{% block content %}
+<div class="card card-pad animate-rise mb-5">
+  <div class="flex items-center justify-center gap-4 text-center">
+    <div class="min-w-0">
+      <span class="emblem emblem-md mx-auto">{{ category.icon }}</span>
+      <p class="mt-2 truncate font-semibold text-sand-900">{{ category.name }}</p>
+      <p class="text-xs text-sand-500">{{ category.usage }} record{{ category.usage|pluralize }}</p>
+    </div>
+    <span class="text-2xl text-sand-400">→</span>
+    <div class="min-w-0">
+      <span class="emblem emblem-md mx-auto">🏷️</span>
+      <p class="mt-2 truncate font-semibold text-sand-600">whichever you pick</p>
+      <p class="text-xs text-sand-500">keeps its own records too</p>
+    </div>
+  </div>
+  <p class="mt-5 border-t border-sand-100 pt-4 text-sm leading-relaxed text-sand-600">
+    “{{ category.name }}” is on {{ category.usage }} record{{ category.usage|pluralize }},
+    so it can't simply be deleted — they'd be left unfiled. Merging moves them
+    all onto another {{ category.get_scope_display|lower }} label, and then
+    “{{ category.name }}” is gone. The records themselves aren't touched
+    otherwise, and no amount of money changes.
+  </p>
+</div>
+
+{% url 'core:category_list' as cancel_url %}
+{% include "partials/_form_card.html" with cancel_url=cancel_url submit_label="Merge and remove" %}
+
+<p class="mt-4 px-1 text-xs leading-relaxed text-sand-500">
+  Rather keep the two apart? Go back and
+  <a href="{% url 'core:category_edit' category.pk %}" class="link">switch “{{ category.name }}” off</a>
+  instead — it stops being suggested, and the records that use it keep it.
+</p>
+{% endblock %}

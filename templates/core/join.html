@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Join {{ invitation.organization.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-xl px-4 py-10 sm:py-14{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% block content %}
+<div class="animate-rise">
+  <div class="mb-8 text-center">
+    <div class="emblem mx-auto h-20 w-20 rounded-3xl text-4xl">{{ invitation.organization.icon }}</div>
+    <h1 class="mt-5 text-2xl font-bold">Join {{ invitation.organization.name }}</h1>
+    <p class="mt-2 text-sand-600">
+      You've been invited as <b class="text-sand-800">{{ invitation.get_role_display }}</b>.
+      Choose how you'll sign in and you're in.
+    </p>
+  </div>
+
+  <form method="post" class="card card-pad">
+    {% csrf_token %}
+
+    <div class="panel mb-6 flex items-start gap-3">
+      <span class="emblem emblem-sm">🎟️</span>
+      <div class="text-sm">
+        <p class="font-semibold text-sand-800">{{ invitation.organization.name }} · {{ invitation.get_role_display }}</p>
+        <p class="mt-0.5 text-sand-600">
+          {% if invitation.invited_by %}Invited by {{ invitation.invited_by.get_full_name|default:invitation.invited_by.username }} · {% endif %}
+          link expires {{ invitation.expires_at|date:"j M Y" }}
+        </p>
+      </div>
+    </div>
+
+    {% if form.non_field_errors %}
+      <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+        <span>⚠️</span><span>{{ form.non_field_errors|striptags }}</span>
+      </div>
+    {% endif %}
+
+    <div class="space-y-5">
+      {% for field in form %}{% include "partials/_field.html" %}{% endfor %}
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-lg mt-7 w-full">Join {{ invitation.organization.name }} →</button>
+  </form>
+
+  <p class="mt-6 text-center text-xs text-sand-500">
+    This link works once. Your role was set by whoever invited you.
+  </p>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == "add" %}Post notice{% else %}Edit notice{% endif %} · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-2xl px-4 pb-28 pt-6 sm:px-6 lg:pb-16 lg:pt-9{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'notices:list' %}" class="back-link">← Back to notices</a>{% endblock %}
+{% block page_icon %}{% if mode == "add" %}📢{% else %}✏️{% endif %}{% endblock %}
+{% block page_title %}{% if mode == "add" %}Post a notice{% else %}Edit notice{% endif %}{% endblock %}
+{% block page_sub %}Everyone signed in can read it. Pin it to keep it at the top of the board.{% endblock %}
+
+{% block content %}
+{% url 'notices:list' as cancel_url %}
+{% include "partials/_form_card.html" with cancel_url=cancel_url submit_label="Publish notice" %}
+{% endblock %}

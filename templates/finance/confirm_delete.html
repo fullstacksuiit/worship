@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Remove entry? · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-md px-4 py-12 sm:py-16{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% block content %}
+<div class="card card-pad animate-rise text-center">
+  <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-3xl">🗑️</div>
+  <h1 class="mt-4 text-xl font-bold">Remove this entry?</h1>
+
+  <div class="panel mt-5 text-left">
+    <div class="flex items-center justify-between gap-4">
+      <span class="badge {% if txn.kind == 'income' %}badge-accent{% else %}badge-danger{% endif %}">{{ txn.get_kind_display }}</span>
+      <span class="{% if txn.kind == 'income' %}money-in{% else %}money-out{% endif %} text-lg">
+        {{ org.currency_symbol }}{{ txn.amount|floatformat:2 }}
+      </span>
+    </div>
+    <p class="mt-2 text-sm text-sand-600">
+      {{ txn.date|date:"j F Y" }}{% if txn.category %} · {{ txn.category }}{% endif %} · {{ txn.party }}
+    </p>
+  </div>
+
+  <p class="mt-4 text-sm font-medium text-red-600">This can't be undone.</p>
+
+  <form method="post" class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center">
+    {% csrf_token %}
+    <a href="{% url 'finance:ledger' %}" class="btn btn-ghost">Keep it</a>
+    <button type="submit" class="btn btn-danger">Yes, remove</button>
+  </form>
+</div>
+{% endblock %}

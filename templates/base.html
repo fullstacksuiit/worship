@@ -1,0 +1,273 @@
+{% load static faith %}<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fbf8f4">
+  <title>{% block title %}{{ org.name|default:"Worship" }}{% endblock %}</title>
+  {% include "partials/_tailwind.html" %}
+  {% comment %}
+    The place's own script — only the one face it actually reads is fetched,
+    and a place with no second language fetches nothing at all.
+  {% endcomment %}
+  {% if org.script %}
+    <link rel="stylesheet" href="{% native_font_url org %}">
+    <style>:root { --native-font: "{{ org.script.font }}"; }</style>
+  {% endif %}
+  {% include "partials/_components.html" %}
+  {% include "partials/_field_styles.html" %}
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="bg-app min-h-full font-sans text-sand-900 antialiased">
+
+{% if user.is_authenticated and org %}
+  <a href="#main" class="skip-link">Skip to content</a>
+
+  {# ---- Desktop sidebar --------------------------------------------------- #}
+  <aside class="fixed inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-sand-200/70 bg-sand-50/80 backdrop-blur-xl lg:flex">
+    <a href="{% url 'core:dashboard' %}" class="flex items-center gap-3 px-5 py-5">
+      <span class="emblem emblem-md">{{ org.icon }}</span>
+      <span class="min-w-0">
+        <span class="block truncate font-display text-[0.95rem] font-bold leading-tight">{{ org.name }}</span>
+        <span class="block truncate text-xs text-sand-500">
+          {% term org "place_term" %}{% if org.city %} · {{ org.city }}{% endif %}
+        </span>
+      </span>
+    </a>
+
+    <nav class="flex-1 space-y-1 overflow-y-auto px-4 pb-4">
+      <p class="px-3 pb-2 pt-1 text-[0.65rem] font-semibold uppercase tracking-widest text-sand-400">Manage</p>
+      {% include "partials/_nav_links.html" %}
+    </nav>
+
+    <div class="border-t border-sand-200/70 p-4">
+      <div class="flex items-center gap-3 rounded-xl bg-white/70 p-3 shadow-sm ring-1 ring-sand-200/70">
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-clay-600 text-sm font-bold text-white">
+          {{ user.get_full_name|default:user.username|slice:":1"|upper }}
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block truncate text-sm font-semibold">{{ user.get_full_name|default:user.username }}</span>
+          <span class="block truncate text-xs capitalize text-sand-500">{{ role }}</span>
+        </span>
+      </div>
+      <div class="mt-2 flex items-center gap-1">
+        {% if user.is_superuser %}
+          <a href="/admin/" class="btn btn-sm btn-quiet flex-1">Django admin</a>
+        {% endif %}
+        <form method="post" action="{% url 'logout' %}" class="flex-1">{% csrf_token %}
+          <button class="btn btn-sm btn-quiet w-full">Sign out</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  {# ---- Mobile top bar ---------------------------------------------------- #}
+  <header class="sticky top-0 z-30 flex items-center gap-3 border-b border-sand-200/70 bg-sand-50/90 px-4 py-3 backdrop-blur-xl lg:hidden">
+    <button type="button" data-drawer-open aria-label="Open menu"
+            class="btn btn-sm btn-ghost !px-2.5 !py-2">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M4 7h16M4 12h16M4 17h16"/>
+      </svg>
+    </button>
+    <a href="{% url 'core:dashboard' %}" class="flex min-w-0 flex-1 items-center gap-2.5">
+      <span class="emblem emblem-sm">{{ org.icon }}</span>
+      <span class="truncate font-display text-sm font-bold">{{ org.name }}</span>
+    </a>
+    <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+      <button class="btn btn-sm btn-quiet" aria-label="Sign out">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 17l5-5-5-5M20 12H9M12 3H6a1 1 0 00-1 1v16a1 1 0 001 1h6"/>
+        </svg>
+      </button>
+    </form>
+  </header>
+
+  {# ---- Mobile drawer ----------------------------------------------------- #}
+  <div id="drawer" class="fixed inset-0 z-50 hidden lg:hidden">
+    <div class="absolute inset-0 bg-sand-950/40 backdrop-blur-sm" data-drawer-close></div>
+    <aside class="absolute inset-y-0 left-0 flex w-[17.5rem] animate-slide-in flex-col bg-sand-50 shadow-lift">
+      <div class="flex items-center gap-3 px-5 py-5">
+        <span class="emblem emblem-md">{{ org.icon }}</span>
+        <span class="min-w-0 flex-1">
+          <span class="block truncate font-display text-[0.95rem] font-bold leading-tight">{{ org.name }}</span>
+          <span class="block truncate text-xs text-sand-500">{{ user.get_full_name|default:user.username }} · <span class="capitalize">{{ role }}</span></span>
+        </span>
+        <button type="button" data-drawer-close aria-label="Close menu" class="btn btn-sm btn-quiet !px-2">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M6 6l12 12M18 6L6 18"/>
+          </svg>
+        </button>
+      </div>
+      <nav class="flex-1 space-y-1 overflow-y-auto px-4 pb-6">
+        {% include "partials/_nav_links.html" %}
+        {% if user.is_superuser %}
+          <a href="/admin/" class="nav-link"><span class="emblem emblem-sm">⚙️</span><span class="flex-1">Django admin</span></a>
+        {% endif %}
+      </nav>
+    </aside>
+  </div>
+{% endif %}
+
+{# ---- Flash messages, as dismissable toasts -------------------------------- #}
+{% if messages %}
+  <div class="pointer-events-none fixed inset-x-0 top-3 z-[55] flex flex-col items-center gap-2 px-4 lg:top-5">
+    {% for m in messages %}
+      <div data-toast
+           class="pointer-events-auto flex w-full max-w-md animate-rise items-start gap-3 rounded-2xl border bg-white/95 px-4 py-3 text-sm shadow-lift backdrop-blur
+                  {% if 'error' in m.tags %}border-red-200{% elif 'warning' in m.tags %}border-gold-200{% else %}border-clay-200{% endif %}">
+        <span class="text-base leading-5">
+          {% if 'error' in m.tags %}⚠️{% elif 'warning' in m.tags %}🔔{% else %}✅{% endif %}
+        </span>
+        <p class="flex-1 pt-0.5 font-medium text-sand-800">{{ m }}</p>
+        <button type="button" data-toast-close aria-label="Dismiss" class="-mr-1 rounded-lg p-1 text-sand-400 transition hover:bg-sand-100 hover:text-sand-700">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <path d="M6 6l12 12M18 6L6 18"/>
+          </svg>
+        </button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<div class="{% if user.is_authenticated and org %}lg:pl-72{% endif %}">
+  <main id="main" class="{% block main_class %}mx-auto w-full max-w-6xl px-4 pb-28 pt-6 sm:px-6 lg:px-10 lg:pb-16 lg:pt-9{% endblock %}">
+    {% block page_header %}
+      <header class="mb-7 animate-rise">
+        <div class="mb-2 empty:hidden">{% block breadcrumb %}{% endblock %}</div>
+        <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+          <div class="flex min-w-0 items-center gap-3.5">
+            <span class="emblem emblem-lg empty:hidden">{% block page_icon %}{% endblock %}</span>
+            <div class="min-w-0">
+              <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
+              <p class="page-sub">{% block page_sub %}{% endblock %}</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 empty:hidden">{% block page_actions %}{% endblock %}</div>
+        </div>
+      </header>
+    {% endblock %}
+
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+{% if user.is_authenticated and org %}
+  {# ---- Phone tab bar — thumb-reachable shortcuts to the busiest screens --- #}
+  <nav class="fixed inset-x-0 bottom-0 z-30 border-t border-sand-200/70 bg-sand-50/95 px-2 pb-[env(safe-area-inset-bottom)] pt-1.5 backdrop-blur-xl lg:hidden">
+    <div class="flex items-stretch gap-1">
+      {% for item in nav %}{% if item.tab %}
+        <a href="{% url item.url %}" class="tab-link {% if item.active %}tab-link-on{% endif %}">
+          <span class="text-lg leading-none">{{ item.icon }}</span>
+          <span class="w-full truncate text-center">{{ item.label }}</span>
+        </a>
+      {% endif %}{% endfor %}
+      <button type="button" data-drawer-open class="tab-link">
+        <span class="text-lg leading-none">⋯</span>
+        <span>More</span>
+      </button>
+    </div>
+  </nav>
+{% endif %}
+
+<script>
+  // Drawer (phones only) — open from the top bar or the "More" tab.
+  (function () {
+    const drawer = document.getElementById("drawer");
+    if (!drawer) return;
+    const setOpen = (open) => {
+      drawer.classList.toggle("hidden", !open);
+      document.body.classList.toggle("overflow-hidden", open);
+    };
+    document.querySelectorAll("[data-drawer-open]").forEach((el) => el.addEventListener("click", () => setOpen(true)));
+    drawer.querySelectorAll("[data-drawer-close]").forEach((el) => el.addEventListener("click", () => setOpen(false)));
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") setOpen(false); });
+  })();
+
+  // Category boxes — type anything, or pick a word this place already uses.
+  // The list narrows as you type and never blocks you from entering a new word.
+  document.querySelectorAll("[data-combo]").forEach((combo) => {
+    const input = combo.querySelector("input");
+    const list = combo.querySelector(".combo-list");
+    const options = Array.from(combo.querySelectorAll(".combo-option"));
+    let active = -1;
+
+    const shown = () => options.filter((o) => !o.hidden);
+    const highlight = (i) => {
+      const visible = shown();
+      active = i;
+      options.forEach((o) => o.removeAttribute("data-active"));
+      if (visible[i]) {
+        visible[i].setAttribute("data-active", "");
+        visible[i].scrollIntoView({ block: "nearest" });
+      }
+    };
+    const narrow = () => {
+      const typed = input.value.trim().toLowerCase();
+      options.forEach((o) => {
+        o.hidden = typed !== "" && !o.textContent.toLowerCase().includes(typed);
+      });
+      return shown().length;
+    };
+    const open = () => {
+      if (!narrow()) return close();
+      list.hidden = false;
+      input.setAttribute("aria-expanded", "true");
+    };
+    const close = () => {
+      list.hidden = true;
+      input.setAttribute("aria-expanded", "false");
+      highlight(-1);
+    };
+    const choose = (option) => {
+      input.value = option.textContent;
+      close();
+      input.focus();
+    };
+
+    input.addEventListener("focus", open);
+    input.addEventListener("input", () => { highlight(-1); open(); });
+    combo.querySelector(".combo-toggle").addEventListener("click", () => {
+      list.hidden ? (input.focus(), open()) : close();
+    });
+    // mousedown, not click: the input's blur would otherwise close the list first.
+    options.forEach((o) => o.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      choose(o);
+    }));
+
+    input.addEventListener("keydown", (e) => {
+      const visible = shown();
+      if (e.key === "Escape") return close();
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        if (list.hidden) return open();
+        const step = e.key === "ArrowDown" ? 1 : -1;
+        highlight((active + step + visible.length) % visible.length);
+      } else if (e.key === "Enter" && !list.hidden && visible[active]) {
+        e.preventDefault();  // Pick the word, don't submit the form yet.
+        choose(visible[active]);
+      } else if (e.key === "Tab") {
+        close();
+      }
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!combo.contains(e.target)) close();
+    });
+  });
+
+  // Toasts fade themselves out; the close button is there for the impatient.
+  document.querySelectorAll("[data-toast]").forEach((toast, i) => {
+    const dismiss = () => {
+      toast.style.transition = "opacity .3s, transform .3s";
+      toast.style.opacity = "0";
+      toast.style.transform = "translateY(-8px)";
+      setTimeout(() => toast.remove(), 300);
+    };
+    toast.querySelector("[data-toast-close]").addEventListener("click", dismiss);
+    setTimeout(dismiss, 5000 + i * 400);
+  });
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

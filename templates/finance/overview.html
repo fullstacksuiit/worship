@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load faith %}
+{% block title %}Money · {{ org.name }}{% endblock %}
+
+{% block page_icon %}💰{% endblock %}
+{% block page_title %}Money{% native_text org org.script.nav.finance %}{% endblock %}
+{% block page_sub %}{{ org.preset.donation_term }}, income and expenses{% endblock %}
+{% block page_actions %}
+  <form method="get" class="field">
+    <label class="sr-only" for="year">Year</label>
+    <select name="year" id="year" onchange="this.form.submit()" class="!w-auto min-w-[6.5rem] !py-2">
+      {% for y in years %}<option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>{% endfor %}
+    </select>
+  </form>
+  {% if caps.manage_money %}
+    <a href="{% url 'finance:add' 'income' %}" class="btn btn-primary">＋ {{ org.preset.donation_term }}</a>
+    <a href="{% url 'finance:add' 'expense' %}" class="btn btn-ghost">＋ Expense</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="grid animate-rise gap-4 sm:grid-cols-3">
+  <div class="card card-pad">
+    <div class="flex items-center justify-between"><span class="kv-key">Income</span><span class="text-lg">💚</span></div>
+    <p class="mt-2 text-2xl font-bold text-clay-700 sm:text-3xl">{{ org.currency_symbol }}{{ totals.income|floatformat:2 }}</p>
+    <p class="mt-1 text-xs text-sand-500">received in {{ year }}</p>
+  </div>
+  <div class="card card-pad">
+    <div class="flex items-center justify-between"><span class="kv-key">Expenses</span><span class="text-lg">🔻</span></div>
+    <p class="mt-2 text-2xl font-bold text-red-600 sm:text-3xl">{{ org.currency_symbol }}{{ totals.expense|floatformat:2 }}</p>
+    <p class="mt-1 text-xs text-sand-500">spent in {{ year }}</p>
+  </div>
+  <div class="card card-pad border-clay-200 bg-gradient-to-b from-clay-50/60 to-white">
+    <div class="flex items-center justify-between"><span class="kv-key">Balance</span><span class="text-lg">⚖️</span></div>
+    <p class="mt-2 text-2xl font-bold sm:text-3xl">{{ org.currency_symbol }}{{ totals.net|floatformat:2 }}</p>
+    <p class="mt-1 text-xs text-sand-500">income minus expenses, {{ year }}</p>
+  </div>
+</section>
+
+<section class="mt-8">
+  <h2 class="section-title"><span>🧾</span> Recent entries
+    <a href="{% url 'finance:ledger' %}" class="ml-auto text-xs font-medium text-sand-500 hover:text-clay-700">Full ledger →</a>
+  </h2>
+
+  {% if recent %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Date</th><th>Category</th><th>From / to</th><th class="text-right">Amount</th></tr>
+        </thead>
+        <tbody>
+          {% for t in recent %}
+            <tr>
+              <td class="whitespace-nowrap text-sand-600">{{ t.date|date:"j M Y" }}</td>
+              <td>
+                {% if t.category %}<span class="badge badge-neutral">{{ t.category }}</span>{% else %}<span class="text-sand-400">—</span>{% endif %}
+              </td>
+              <td class="text-sand-700">{{ t.party }}</td>
+              <td class="whitespace-nowrap text-right {% if t.kind == 'income' %}money-in{% else %}money-out{% endif %}">
+                {% if t.kind == 'income' %}+{% else %}−{% endif %}{{ org.currency_symbol }}{{ t.amount|floatformat:2 }}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty">
+      <span class="text-4xl">💰</span>
+      <p class="mt-3 font-semibold">Nothing recorded for {{ year }} yet</p>
+      <p class="mt-1 max-w-sm text-sm text-sand-600">
+        Every {{ org.preset.donation_term|lower }} and every expense you enter here builds
+        the ledger you can export at any time.
+      </p>
+      {% if caps.manage_money %}
+        <div class="mt-5 flex flex-wrap justify-center gap-2">
+          <a href="{% url 'finance:add' 'income' %}" class="btn btn-primary">＋ Record {{ org.preset.donation_term|lower }}</a>
+          <a href="{% url 'finance:add' 'expense' %}" class="btn btn-ghost">＋ Record expense</a>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

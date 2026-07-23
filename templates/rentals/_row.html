@@ -1,0 +1,24 @@
+{% comment %}One booking in a list.{% endcomment %}
+<a href="{% url 'rentals:detail' b.pk %}"
+   class="card-link flex items-center gap-4 p-4 {% if b.is_cancelled %}opacity-60{% endif %}">
+  <span class="emblem emblem-md">{{ b.property.icon }}</span>
+  <span class="min-w-0 flex-1">
+    <span class="block truncate font-semibold">{{ b.property.name }}</span>
+    <span class="mt-0.5 block truncate text-sm text-sand-600">
+      👤 {{ b.renter_name }}{% if b.purpose %} · {{ b.purpose }}{% endif %}
+    </span>
+    <span class="mt-0.5 block truncate text-xs text-sand-500">
+      📆 {{ b.start_date|date:"j M Y" }}{% if b.end_date != b.start_date %} – {{ b.end_date|date:"j M Y" }}{% endif %}{% if b.start_time %} · {{ b.start_time|time:"g:i A" }}–{{ b.end_time|time:"g:i A" }}{% endif %}
+    </span>
+  </span>
+  <span class="shrink-0 text-right">
+    <span class="block font-semibold">{{ b.rent_display }}</span>
+    {% if b.is_cancelled %}
+      <span class="badge badge-neutral mt-1">cancelled</span>
+    {% elif b.is_paid %}
+      <span class="badge badge-accent mt-1">paid</span>
+    {% else %}
+      <span class="badge badge-danger mt-1">unpaid</span>
+    {% endif %}
+  </span>
+</a>

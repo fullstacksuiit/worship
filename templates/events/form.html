@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == "add" %}New{% else %}Edit{% endif %} event · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-2xl px-4 pb-28 pt-6 sm:px-6 lg:pb-16 lg:pt-9{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'events:list' %}" class="back-link">← Back to events</a>{% endblock %}
+{% block page_icon %}{% if mode == "add" %}📅{% else %}✏️{% endif %}{% endblock %}
+{% block page_title %}{% if mode == "add" %}Schedule an event{% else %}Edit {{ event.title }}{% endif %}{% endblock %}
+{% block page_sub %}Leave the end time blank if it's open-ended{% endblock %}
+
+{% block content %}
+{% url 'events:list' as cancel_url %}
+{% include "partials/_form_card.html" with cancel_url=cancel_url submit_label="Save event" %}
+{% endblock %}

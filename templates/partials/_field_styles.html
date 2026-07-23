@@ -1,0 +1,57 @@
+{% comment %}
+The form control system.
+
+Django renders its own widgets, so instead of asking every form to declare CSS
+classes we style anything inside a `.field` wrapper — plus an explicit
+`.field-control` escape hatch for hand-written inputs. One look, everywhere:
+warm resting state, accent-aware focus ring, custom caret on selects.
+{% endcomment %}
+<style type="text/tailwindcss">
+  @layer components {
+    .field :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]),
+    .field-control {
+      @apply w-full rounded-xl border border-sand-200 bg-sand-50/70 px-3.5 py-2.5
+             text-[0.95rem] text-sand-900 shadow-inner outline-none transition
+             placeholder:text-sand-400;
+    }
+
+    .field :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):hover,
+    .field-control:hover { @apply border-sand-300; }
+
+    .field :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):focus,
+    .field-control:focus {
+      @apply border-clay-400 bg-white ring-4 ring-clay-500/15;
+    }
+
+    /* Native caret off, warm chevron on. */
+    .field select, select.field-control {
+      @apply appearance-none bg-[length:1.1rem] bg-[right_0.75rem_center] bg-no-repeat pr-10;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%237d583b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    }
+
+    .field textarea { @apply min-h-[5.5rem] leading-relaxed; }
+
+    /* Room for the category box's own chevron. */
+    .field .combo input { @apply pr-10; }
+
+    /* Checkboxes and radios keep their native shape, just warmer and bigger. */
+    .field :is(input[type="checkbox"], input[type="radio"]), .field-check {
+      @apply h-[1.15rem] w-[1.15rem] shrink-0 cursor-pointer rounded border-sand-300;
+      accent-color: #1d7768;
+    }
+
+    /* Date/time pickers: nudge the native indicator into the warm palette. */
+    .field ::-webkit-calendar-picker-indicator { @apply cursor-pointer opacity-60 hover:opacity-100; }
+
+    .field-label { @apply mb-1.5 block text-sm font-medium text-sand-800; }
+    .field-help  { @apply mt-1.5 text-xs leading-relaxed text-sand-500; }
+    .field-error { @apply mt-1.5 flex items-start gap-1 text-sm font-medium text-red-600; }
+
+    /* A checkbox row reads as one tappable control, not a stray box. */
+    .field-toggle {
+      @apply flex cursor-pointer items-center gap-3 rounded-xl border border-sand-200
+             bg-sand-50/60 px-3.5 py-3 text-sm font-medium text-sand-800 transition
+             hover:border-sand-300 hover:bg-white;
+    }
+  }
+</style>

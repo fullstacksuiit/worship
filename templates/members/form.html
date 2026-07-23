@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load faith %}
+{% block title %}{% if mode == "add" %}Add{% else %}Edit{% endif %} {{ org.preset.member_term }} · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-2xl px-4 pb-28 pt-6 sm:px-6 lg:pb-16 lg:pt-9{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'members:list' %}" class="back-link">← Back to {{ org.preset.community_term }}</a>{% endblock %}
+{% block page_icon %}{% if mode == "add" %}👤{% else %}✏️{% endif %}{% endblock %}
+{% block page_title %}{% if mode == "add" %}Add {% term org "member_term" %}{% else %}Edit {{ member.name }}{% endif %}{% endblock %}
+{% block page_sub %}Only the name is required — you can fill in the rest whenever you have it{% endblock %}
+
+{% block content %}
+{% url 'members:list' as cancel_url %}
+{% include "partials/_form_card.html" with cancel_url=cancel_url submit_label="Save "|add:org.preset.member_term %}
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Invite link{% endblock %}
+{% block main_class %}mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-4 py-12{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% block content %}
+<div class="card card-pad animate-rise text-center">
+  {% if already_signed_in %}
+    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gold-100 text-3xl">👋</div>
+    <h1 class="mt-4 text-xl font-bold">You're already signed in</h1>
+    <p class="mt-2 text-sm leading-relaxed text-sand-600">
+      Sign out first, then open this link again to join
+      <b class="text-sand-800">{{ invitation.organization.name }}</b> as a separate person.
+    </p>
+    <form method="post" action="{% url 'logout' %}" class="mt-6">{% csrf_token %}
+      <button class="btn btn-primary w-full">Sign out</button>
+    </form>
+    <a href="{% url 'core:dashboard' %}" class="btn btn-ghost mt-3 w-full">Stay signed in</a>
+  {% else %}
+    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-sand-100 text-3xl">🎟️</div>
+    <h1 class="mt-4 text-xl font-bold">This link no longer works</h1>
+    <p class="mt-2 text-sm leading-relaxed text-sand-600">
+      {% if invitation.accepted_at %}
+        It has already been used to create an account.
+      {% elif invitation %}
+        It expired on {{ invitation.expires_at|date:"j M Y" }}.
+      {% else %}
+        It may have been cancelled, or the address was mistyped.
+      {% endif %}
+      Ask an admin of your place for a fresh invite.
+    </p>
+    <a href="{% url 'login' %}" class="btn btn-ghost mt-6 w-full">Go to sign in</a>
+  {% endif %}
+</div>
+{% endblock %}

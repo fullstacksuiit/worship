@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == "add" %}Add category{% else %}Rename {{ category.name }}{% endif %} · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-2xl px-4 pb-28 pt-6 sm:px-6 lg:pb-16 lg:pt-9{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'core:category_list' %}" class="back-link">← Back to categories</a>{% endblock %}
+{% block page_icon %}{% if mode == "add" %}🏷️{% else %}✏️{% endif %}{% endblock %}
+{% block page_title %}{% if mode == "add" %}Add a category{% else %}Edit “{{ category.name }}”{% endif %}{% endblock %}
+{% block page_sub %}
+  {% if mode == "add" %}A word you'll want to file things under{% else %}{{ category.get_scope_display }} label{% endif %}
+{% endblock %}
+
+{% block content %}
+{% url 'core:category_list' as cancel_url %}
+{% include "partials/_form_card.html" with cancel_url=cancel_url submit_label="Save category" %}
+
+{% if mode == "edit" and category.usage %}
+  <div class="card card-pad mt-5">
+    <div class="flex items-start gap-3.5">
+      <span class="emblem emblem-sm">📎</span>
+      <div class="min-w-0 flex-1 text-sm leading-relaxed text-sand-600">
+        <p>
+          <span class="font-semibold text-sand-800">{{ category.usage }} record{{ category.usage|pluralize }}</span>
+          {{ category.usage|pluralize:"is,are" }} filed under this word. Renaming it
+          changes what every one of them says — which is the point, when the word
+          was mistyped.
+        </p>
+        <p class="mt-2">
+          Where it's offered is fixed now: moving it would strand what's already
+          filed here. To retire the word instead,
+          <a href="{% url 'core:category_merge' category.pk %}" class="link">merge it into another label</a>.
+        </p>
+      </div>
+    </div>
+  </div>
+{% elif mode == "add" %}
+  <p class="mt-4 px-1 text-xs leading-relaxed text-sand-500">
+    You can skip this screen entirely — typing a new word into any category box
+    adds it there and then. This is for setting one up before you need it.
+  </p>
+{% endif %}
+{% endblock %}

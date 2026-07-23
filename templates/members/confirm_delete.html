@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Remove {{ member.name }}? · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-md px-4 py-12 sm:py-16{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% block content %}
+{% url 'members:detail' member.pk as cancel_url %}
+{% include "partials/_confirm_card.html" with cancel_url=cancel_url heading="Remove "|add:member.name|add:"?" note="Their donations, attendance and bookings lose this link. If they've simply moved away, editing them to “inactive” keeps the history." %}
+{% endblock %}

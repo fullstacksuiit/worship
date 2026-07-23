@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Remove event? · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-md px-4 py-12 sm:py-16{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% block content %}
+{% url 'events:detail' event.pk as cancel_url %}
+{% with when=event.start|date:"j M Y · g:i A" %}
+  {% include "partials/_confirm_card.html" with cancel_url=cancel_url heading="Remove “"|add:event.title|add:"”?" note=when|add:" — the attendance recorded against it goes too." %}
+{% endwith %}
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Invite someone · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-xl px-4 pb-28 pt-6 sm:px-6 lg:pb-16 lg:pt-9{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'core:team_list' %}" class="back-link">← Team</a>{% endblock %}
+{% block page_icon %}🎟️{% endblock %}
+{% block page_title %}Invite someone{% endblock %}
+{% block page_sub %}Send a link — they pick their own username and password{% endblock %}
+
+{% block content %}
+{% url 'core:team_list' as cancel_url %}
+{% include "partials/_form_card.html" with cancel_url=cancel_url submit_label="Create invite link" %}
+
+<div class="panel mt-5 flex items-start gap-3">
+  <span class="emblem emblem-sm">🔒</span>
+  <p class="text-sm leading-relaxed text-sand-600">
+    The link works once and expires after 7 days. Anyone who opens it joins
+    <b class="text-sand-800">{{ org.name }}</b> with the role you pick here — so send it
+    to one person, not a group.
+  </p>
+</div>
+{% endblock %}

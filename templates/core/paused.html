@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Access paused{% endblock %}
+{% block main_class %}mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-4 py-12{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% block content %}
+<div class="card card-pad animate-rise text-center">
+  <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gold-100 text-3xl">⏸️</div>
+  <h1 class="mt-4 text-xl font-bold">Your access is paused</h1>
+  <p class="mt-2 text-sm leading-relaxed text-sand-600">
+    Hello {{ user.get_full_name|default:user.username }} — your account is switched
+    off for now, so there's nothing here to show. An admin of your place can turn
+    it back on from their Team page.
+  </p>
+  <form method="post" action="{% url 'logout' %}" class="mt-6">{% csrf_token %}
+    <button class="btn btn-primary w-full">Sign out</button>
+  </form>
+</div>
+{% endblock %}

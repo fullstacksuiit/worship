@@ -1,0 +1,22 @@
+{% comment %}
+The one form card every "add / edit" screen in the app uses.
+Params: cancel_url (required), submit_label (optional).
+{% endcomment %}
+<form method="post" class="card card-pad animate-rise">
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+      <span>⚠️</span><span>{{ form.non_field_errors|striptags }}</span>
+    </div>
+  {% endif %}
+
+  <div class="space-y-5">
+    {% for field in form %}{% include "partials/_field.html" %}{% endfor %}
+  </div>
+
+  <div class="mt-7 flex flex-wrap gap-3 border-t border-sand-100 pt-5">
+    <button type="submit" class="btn btn-primary">{{ submit_label|default:"Save" }}</button>
+    <a href="{{ cancel_url }}" class="btn btn-ghost">Cancel</a>
+  </div>
+</form>

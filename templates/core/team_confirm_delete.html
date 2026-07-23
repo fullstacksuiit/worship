@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Remove team member? · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-md px-4 py-12 sm:py-16{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% block content %}
+{% url 'core:team_list' as cancel_url %}
+{% with name=member.user.get_full_name|default:member.user.username %}
+  {% include "partials/_confirm_card.html" with cancel_url=cancel_url confirm_label="Yes, remove them" heading="Remove "|add:name|add:"?" note="Their login is deleted straight away — they won't be able to sign in again." %}
+{% endwith %}
+{% endblock %}

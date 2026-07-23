@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ heading }} · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-2xl px-4 pb-28 pt-6 sm:px-6 lg:pb-16 lg:pt-9{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'finance:overview' %}" class="back-link">← Back to Money</a>{% endblock %}
+{% block page_icon %}{% if kind == 'income' %}💚{% else %}🔻{% endif %}{% endblock %}
+{% block page_title %}{{ heading }}{% endblock %}
+{% block page_sub %}{% if kind == 'income' %}Money coming in — link it to a {{ org.preset.member_term|lower }} or just name the donor{% else %}Money going out — bills, salaries, repairs and everything else{% endif %}{% endblock %}
+
+{% block content %}
+{% url 'finance:overview' as cancel_url %}
+{% include "partials/_form_card.html" with cancel_url=cancel_url submit_label="Save entry" %}
+{% endblock %}

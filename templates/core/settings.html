@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load faith %}
+{% block title %}Settings · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-2xl px-4 pb-28 pt-6 sm:px-6 lg:pb-16 lg:pt-9{% endblock %}
+
+{% block page_icon %}⚙️{% endblock %}
+{% block page_title %}Settings{% native_text org org.script.nav.settings %}{% endblock %}
+{% block page_sub %}Your place's name, and the language its screens speak{% endblock %}
+
+{% block content %}
+{% url 'core:dashboard' as home_url %}
+{% include "partials/_form_card.html" with cancel_url=home_url submit_label="Save changes" %}
+
+{# ---- What the words are, in both languages ------------------------------ #}
+<section class="card card-pad animate-rise mt-5">
+  <div class="flex items-start gap-3.5">
+    <span class="emblem emblem-md">{{ org.icon }}</span>
+    <div class="min-w-0 flex-1">
+      <h2 class="font-display text-base font-bold">
+        The words your screens use
+      </h2>
+      <p class="mt-1 text-sm leading-relaxed text-sand-600">
+        They came from your tradition — {{ org.preset.tradition }}{% if org.language %}, which the app also
+        writes in {{ org.language.language }}
+        ({% native_text org org.language.native_name org.language.code org.language.direction "ml-0" %}){% endif %}.
+        Categories you type are yours to name; these are the built-in ones.
+      </p>
+    </div>
+  </div>
+
+  <dl class="mt-5 divide-y divide-sand-100 border-t border-sand-100">
+    {% for word in vocabulary %}
+      <div class="flex items-baseline gap-4 py-2.5">
+        <dt class="w-40 shrink-0 text-xs font-medium uppercase tracking-wide text-sand-500">{{ word.what }}</dt>
+        <dd class="min-w-0 flex-1 font-medium text-sand-900">
+          {{ word.english }}
+          {% if word.native and org.show_native %}
+            <span class="native" lang="{{ org.script.code }}" dir="{{ org.script.direction }}">{{ word.native }}</span>
+          {% endif %}
+        </dd>
+      </div>
+    {% endfor %}
+  </dl>
+
+  {% if org.language and not org.show_native %}
+    <p class="mt-4 rounded-xl bg-sand-100/70 px-4 py-3 text-sm text-sand-600">
+      {{ org.language.language }} is switched off, so screens stay in English. Turn it back
+      on above whenever you want both.
+    </p>
+  {% elif not org.language %}
+    <p class="mt-4 rounded-xl bg-sand-100/70 px-4 py-3 text-sm text-sand-600">
+      This tradition is set up in English only.
+    </p>
+  {% endif %}
+</section>
+
+{# ---- The words this place made up for itself ---------------------------- #}
+{% if caps.manage_categories %}
+  <a href="{% url 'core:category_list' %}" class="card-link card-pad animate-rise mt-5 flex items-center gap-3.5">
+    <span class="emblem emblem-md">🏷️</span>
+    <span class="min-w-0 flex-1">
+      <span class="block font-display text-base font-bold">Your categories</span>
+      <span class="mt-1 block text-sm leading-relaxed text-sand-600">
+        The words you file money, events and property under. Rename a typo, fold
+        two spellings into one, or retire a word you've stopped using.
+      </span>
+    </span>
+    <span class="shrink-0 text-sand-400">→</span>
+  </a>
+{% endif %}
+
+{# ---- The one thing that can't change ------------------------------------ #}
+<p class="mt-4 px-1 text-xs leading-relaxed text-sand-500">
+  Your tradition — {{ org.preset.label }} — is fixed after sign-up: it seeded the categories your
+  records are already filed under. Everything else here is yours to change any time.
+</p>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load faith %}
+{% block title %}Register your place · Worship{% endblock %}
+{% block main_class %}mx-auto w-full max-w-xl px-4 py-10 sm:py-14{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% comment %}
+  Sign-up is the one screen that shows every tradition at once, so it's also
+  the only one that needs every script's font.
+{% endcomment %}
+{% block head_extra %}<link rel="stylesheet" href="{% every_script_font_url %}">{% endblock %}
+
+{% block content %}
+<div class="animate-rise">
+  <div class="mb-8 text-center">
+    <div class="flex items-center justify-center gap-2">
+      <span class="emblem emblem-md rotate-[-6deg]">🕌</span>
+      <span class="emblem emblem-lg z-10">🛕</span>
+      <span class="emblem emblem-md rotate-[6deg]">⛪</span>
+    </div>
+    <h1 class="mt-6 text-2xl font-bold sm:text-3xl">Register your place</h1>
+    <p class="mx-auto mt-2 max-w-sm text-sand-600">
+      One step and you're running. Pick your tradition and the whole app speaks its
+      language — what you call your community, your giving, your gatherings — in
+      English and in your own script, side by side.
+    </p>
+  </div>
+
+  <form method="post" class="card card-pad">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+        <span>⚠️</span><span>{{ form.non_field_errors|striptags }}</span>
+      </div>
+    {% endif %}
+
+    <div class="space-y-5">
+      {% include "partials/_field.html" with field=form.place_name %}
+
+      {% comment %}
+        The tradition, as tiles rather than a dropdown: it's the one answer that
+        changes the wording on every other screen, so it's shown, not hidden.
+      {% endcomment %}
+      <div class="field">
+        <span class="field-label">Which tradition?<span class="ml-0.5 text-red-500">*</span></span>
+        <div class="grid gap-2.5 sm:grid-cols-2">
+          {% for f in faiths %}
+            <div>
+              <input type="radio" name="faith" id="faith-{{ f.value }}" value="{{ f.value }}"
+                     class="peer sr-only" {% if form.faith.value == f.value %}checked{% endif %}>
+              <label for="faith-{{ f.value }}" class="pick-tile h-full">
+                <span class="emblem emblem-sm">{{ f.icon }}</span>
+                <span class="min-w-0 flex-1">
+                  <span class="pick-tile-title">{{ f.label }}</span>
+                  <span class="pick-tile-sub truncate">{{ f.greeting }} · {{ f.donation_term }}</span>
+                  {% if f.language %}
+                    <span class="pick-tile-sub truncate text-clay-700">
+                      + {{ f.language }}
+                      <span class="native text-clay-600" lang="{{ f.script_code }}" dir="{{ f.script_direction }}">{{ f.native_name }}</span>
+                    </span>
+                  {% endif %}
+                </span>
+              </label>
+            </div>
+          {% endfor %}
+        </div>
+        {% if form.faith.errors %}
+          <p class="field-error"><span>⚠</span><span>{{ form.faith.errors|striptags }}</span></p>
+        {% endif %}
+      </div>
+
+      {% include "partials/_field.html" with field=form.city %}
+
+      <div class="!mt-8 flex items-center gap-3 border-t border-sand-100 pt-6">
+        <span class="emblem emblem-sm">🔑</span>
+        <div>
+          <p class="text-sm font-semibold text-sand-800">Your admin login</p>
+          <p class="text-xs text-sand-500">You'll sign in with this, and you can add your team later.</p>
+        </div>
+      </div>
+
+      {% include "partials/_field.html" with field=form.full_name %}
+      {% include "partials/_field.html" with field=form.username %}
+      {% include "partials/_field.html" with field=form.password %}
+      {% include "partials/_field.html" with field=form.password_confirm %}
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-lg mt-7 w-full">Create my place →</button>
+  </form>
+
+  <p class="mt-6 text-center text-sm text-sand-500">
+    Already registered? <a href="{% url 'login' %}" class="link">Sign in</a>
+  </p>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == "add" %}Add team member{% else %}Edit role{% endif %} · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-2xl px-4 pb-28 pt-6 sm:px-6 lg:pb-16 lg:pt-9{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'core:team_list' %}" class="back-link">← Back to team</a>{% endblock %}
+{% block page_icon %}{% if mode == "add" %}🧑‍🤝‍🧑{% else %}✏️{% endif %}{% endblock %}
+{% block page_title %}{% if mode == "add" %}Add team member{% else %}Edit {{ member.user.get_full_name|default:member.user.username }}{% endif %}{% endblock %}
+{% block page_sub %}{% if mode == "add" %}Creates their login and decides what they may change{% else %}Change their role or switch their access off{% endif %}{% endblock %}
+
+{% block content %}
+{% url 'core:team_list' as cancel_url %}
+{% include "partials/_form_card.html" with cancel_url=cancel_url submit_label="Save member" %}
+{% endblock %}

@@ -1,0 +1,19 @@
+{% comment %}One event in a list. Shared by the events list and the dashboard.{% endcomment %}
+<a href="{% url 'events:detail' e.pk %}" class="card-link flex items-center gap-4 p-4">
+  <span class="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl border border-sand-200/80 bg-gradient-to-b from-white to-sand-100 text-sand-700 shadow-sm">
+    <span class="text-[0.65rem] font-bold uppercase tracking-wide text-clay-700">{{ e.start|date:"M" }}</span>
+    <span class="text-xl font-bold leading-none">{{ e.start|date:"d" }}</span>
+  </span>
+  <span class="min-w-0 flex-1">
+    <span class="flex flex-wrap items-center gap-2">
+      <span class="truncate font-semibold">{{ e.title }}</span>
+      {% if e.category %}<span class="badge badge-neutral">{{ e.category }}</span>{% endif %}
+    </span>
+    <span class="mt-1 block truncate text-sm text-sand-600">
+      🕐 {{ e.start|date:"D, g:i A" }}{% if e.location %} · 📍 {{ e.location }}{% endif %}
+    </span>
+  </span>
+  {% with n=e.attendees.count %}
+    {% if n %}<span class="badge badge-accent shrink-0">✅ {{ n }}</span>{% endif %}
+  {% endwith %}
+</a>

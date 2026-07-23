@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Properties · {{ org.name }}{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'rentals:list' %}" class="back-link">← Back to rentals</a>{% endblock %}
+{% block page_icon %}🏠{% endblock %}
+{% block page_title %}Properties{% endblock %}
+{% block page_sub %}Everything you rent out, and what each one costs{% endblock %}
+{% block page_actions %}
+  {% if caps.manage_rentals %}<a href="{% url 'rentals:property_add' %}" class="btn btn-primary">＋ Add property</a>{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if properties %}
+  {% if needs_rate and caps.manage_rentals %}
+    <div class="mb-6 flex items-start gap-2.5 rounded-2xl border border-clay-200 bg-clay-50/70 px-4 py-3 text-sm text-clay-800">
+      <span>💡</span>
+      <span>
+        <strong>{{ needs_rate|length }}</strong> propert{{ needs_rate|length|pluralize:"y,ies" }} still {% if needs_rate|length == 1 %}has{% else %}have{% endif %} no rate
+        ({% for p in needs_rate %}<a href="{% url 'rentals:property_edit' p.pk %}" class="link">{{ p.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}).
+        Set one and every booking fills its rent in for you.
+      </span>
+    </div>
+  {% endif %}
+
+  {% for label, items in groups %}
+    <section class="{% if not forloop.first %}mt-9{% endif %} animate-rise">
+      <h2 class="section-title">{{ label }} <span class="text-sand-500">({{ items|length }})</span></h2>
+      <div class="grid gap-4 sm:grid-cols-2">
+        {% for p in items %}
+          <div class="card card-pad {% if not p.is_active %}opacity-70{% endif %}">
+            <div class="flex items-start gap-4">
+              <span class="emblem emblem-md">{{ p.icon }}</span>
+              <div class="min-w-0 flex-1">
+                <h3 class="flex flex-wrap items-center gap-2 font-display font-bold">
+                  {{ p.name }}
+                  {% if not p.is_active %}<span class="badge badge-neutral">inactive</span>{% endif %}
+                </h3>
+                <p class="mt-1 text-sm font-semibold {% if p.has_rate %}text-clay-700{% else %}text-sand-500{% endif %}">
+                  {% if p.has_rate %}💰 {{ p.rate_display }}{% else %}💰 Rate not set{% endif %}
+                </p>
+                {% if p.description %}<p class="mt-1 text-sm leading-relaxed text-sand-600">{{ p.description }}</p>{% endif %}
+                {% if p.has_opening_balance %}
+                  <p class="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-sm font-semibold {% if p.opening_is_arrears %}text-red-600{% else %}text-emerald-700{% endif %}">
+                    <span>📒</span> Opened {{ p.opening_balance_display }}
+                    <span class="font-normal text-sand-500">as of {{ p.opening_balance_date|date:"j M Y" }}</span>
+                  </p>
+                {% endif %}
+                <p class="mt-2 text-xs text-sand-500">
+                  {% if p.is_tenancy %}
+                    🏪 Monthly tenant{% if p.deposit_amount %} · deposit {{ p.deposit_display }}{% endif %}
+                  {% else %}
+                    🏛️ {{ p.bookings.count }} booking{{ p.bookings.count|pluralize }} so far{% if p.deposit_amount %} · deposit {{ p.deposit_display }}{% endif %}
+                  {% endif %}
+                </p>
+              </div>
+            </div>
+            {% if caps.manage_rentals %}
+              <div class="mt-4 flex gap-2 border-t border-sand-100 pt-4">
+                <a href="{% url 'rentals:property_edit' p.pk %}" class="btn btn-sm btn-ghost">✏️ Edit</a>
+                <a href="{% url 'rentals:property_delete' p.pk %}" class="btn btn-sm btn-quiet !text-red-600 hover:!bg-red-50">Delete</a>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+{% else %}
+  <div class="empty">
+    <span class="text-4xl">🏠</span>
+    <p class="mt-3 font-semibold">No properties yet</p>
+    <p class="mt-1 max-w-sm text-sm text-sand-600">
+      Add the shops, halls and rooms you rent out — give each one a rate, and
+      from then on every booking prices itself.
+    </p>
+    {% if caps.manage_rentals %}<a href="{% url 'rentals:property_add' %}" class="btn btn-primary mt-5">＋ Add a property</a>{% endif %}
+  </div>
+{% endif %}
+{% endblock %}

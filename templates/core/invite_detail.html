@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Invite link · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-xl px-4 pb-28 pt-6 sm:px-6 lg:pb-16 lg:pt-9{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'core:team_list' %}" class="back-link">← Team</a>{% endblock %}
+{% block page_icon %}🎟️{% endblock %}
+{% block page_title %}Invite link ready{% endblock %}
+{% block page_sub %}Send this to {{ invite.label|default:"the person you're inviting" }}{% endblock %}
+
+{% block content %}
+<div class="card card-pad animate-rise">
+  <div class="mb-4 flex flex-wrap items-center gap-2">
+    <span class="badge badge-accent">{{ invite.get_role_display }}</span>
+    <span class="badge badge-neutral">Works once</span>
+    <span class="badge badge-gold">Expires {{ invite.expires_at|date:"j M Y" }}</span>
+  </div>
+
+  {# Selected on click: on a phone, "tap then share" beats "select this long string". #}
+  <label class="field-label" for="join-url">The link</label>
+  <input id="join-url" class="field-control font-mono text-xs" readonly
+         value="{{ join_url }}" onclick="this.select()">
+
+  <div class="mt-4 flex flex-wrap gap-3">
+    <button type="button" data-copy="{{ join_url }}" class="btn btn-primary">📋 Copy link</button>
+    <a href="https://wa.me/?text={{ join_url|urlencode }}" target="_blank" rel="noopener"
+       class="btn btn-ghost">Share on WhatsApp</a>
+    <a href="{% url 'core:team_list' %}" class="btn btn-quiet">Done</a>
+  </div>
+</div>
+
+<div class="panel mt-5 flex items-start gap-3">
+  <span class="emblem emblem-sm">💡</span>
+  <p class="text-sm leading-relaxed text-sand-600">
+    This is the only place the link is shown. If you lose it, cancel the invite on the
+    Team page and make a new one — no harm done.
+  </p>
+</div>
+
+<script>
+  document.querySelectorAll("[data-copy]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const text = btn.dataset.copy;
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        // Clipboard API needs https; fall back to selecting the field so the
+        // person can copy it by hand rather than being told nothing happened.
+        const field = document.getElementById("join-url");
+        field.select();
+        document.execCommand("copy");
+      }
+      const original = btn.textContent;
+      btn.textContent = "✅ Copied";
+      setTimeout(() => { btn.textContent = original; }, 2000);
+    });
+  });
+</script>
+{% endblock %}

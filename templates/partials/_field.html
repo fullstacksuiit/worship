@@ -1,0 +1,19 @@
+{% comment %}
+One form row. Django renders the widget; `.field` gives it the app's look.
+Checkboxes become a full tappable row instead of a lonely little box.
+{% endcomment %}
+<div class="field">
+  {% if field.field.widget.input_type == "checkbox" %}
+    <label class="field-toggle" for="{{ field.id_for_label }}">
+      {{ field }}
+      <span class="flex-1">{{ field.label }}</span>
+    </label>
+  {% else %}
+    <label class="field-label" for="{{ field.id_for_label }}">
+      {{ field.label }}{% if field.field.required %}<span class="ml-0.5 text-red-500">*</span>{% endif %}
+    </label>
+    {{ field }}
+  {% endif %}
+  {% if field.help_text %}<p class="field-help">{{ field.help_text }}</p>{% endif %}
+  {% if field.errors %}<p class="field-error"><span>⚠</span><span>{{ field.errors|striptags }}</span></p>{% endif %}
+</div>

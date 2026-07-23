@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Remove booking? · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-md px-4 py-12 sm:py-16{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% block content %}
+{% url 'rentals:detail' booking.pk as cancel_url %}
+{% with what=booking.property.name|add:" · "|add:booking.renter_name %}
+  {% include "partials/_confirm_card.html" with cancel_url=cancel_url heading="Remove this booking?" note=what %}
+{% endwith %}
+<p class="mt-4 text-center text-sm text-sand-600">
+  Want to keep the record? Cancel the booking instead — the dates free up and the history stays.
+</p>
+{% endblock %}

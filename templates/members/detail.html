@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ member.name }} · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-3xl px-4 pb-28 pt-6 sm:px-6 lg:pb-16 lg:pt-9{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% block content %}
+<a href="{% url 'members:list' %}" class="back-link">← Back to {{ org.preset.community_term }}</a>
+
+<div class="card animate-rise mt-3 overflow-hidden">
+  <div class="border-b border-sand-100 bg-gradient-to-b from-sand-50 to-white px-5 py-6 sm:px-6">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-clay-600 text-2xl font-bold text-white shadow-soft">
+          {{ member.name|slice:":1"|upper }}
+        </span>
+        <div class="min-w-0">
+          <h1 class="text-2xl font-bold">{{ member.name }}</h1>
+          <p class="mt-1 flex flex-wrap items-center gap-2 text-sm text-sand-600">
+            <span>{{ org.preset.member_term }}</span>
+            {% if member.is_active %}
+              <span class="badge badge-accent">active</span>
+            {% else %}
+              <span class="badge badge-neutral">inactive</span>
+            {% endif %}
+          </p>
+        </div>
+      </div>
+      {% if caps.manage_people %}
+        <div class="flex gap-2">
+          <a href="{% url 'members:edit' member.pk %}" class="btn btn-sm btn-ghost">✏️ Edit</a>
+          <a href="{% url 'members:delete' member.pk %}" class="btn btn-sm btn-danger-ghost">Delete</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <dl class="grid gap-5 p-5 sm:grid-cols-2 sm:p-6">
+    <div>
+      <dt class="kv-key">Phone</dt>
+      <dd class="kv-val">
+        {% if member.phone %}<a href="tel:{{ member.phone }}" class="link">{{ member.phone }}</a>{% else %}—{% endif %}
+      </dd>
+    </div>
+    <div>
+      <dt class="kv-key">Email</dt>
+      <dd class="kv-val">
+        {% if member.email %}<a href="mailto:{{ member.email }}" class="link">{{ member.email }}</a>{% else %}—{% endif %}
+      </dd>
+    </div>
+    <div><dt class="kv-key">Family / household</dt><dd class="kv-val">{{ member.household|default:"—" }}</dd></div>
+    <div><dt class="kv-key">Joined</dt><dd class="kv-val">{{ member.join_date|date:"j F Y" }}</dd></div>
+  </dl>
+
+  {% if member.notes %}
+    <div class="border-t border-sand-100 p-5 sm:p-6">
+      <p class="kv-key">Notes</p>
+      <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-sand-800">{{ member.notes }}</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

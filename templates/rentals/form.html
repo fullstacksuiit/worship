@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == "add" %}New booking{% else %}Edit booking{% endif %} · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-2xl px-4 pb-28 pt-6 sm:px-6 lg:pb-16 lg:pt-9{% endblock %}
+
+{% block breadcrumb %}<a href="{% url 'rentals:list' %}" class="back-link">← Back to rentals</a>{% endblock %}
+{% block page_icon %}{% if mode == "add" %}🏛️{% else %}✏️{% endif %}{% endblock %}
+{% block page_title %}{% if mode == "add" %}New booking{% else %}Edit booking{% endif %}{% endblock %}
+{% block page_sub %}The rent works itself out from the property's rate — overlapping dates are refused{% endblock %}
+
+{% block content %}
+<form method="post" class="card card-pad animate-rise">
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+      <span>⚠️</span><span>{{ form.non_field_errors|striptags }}</span>
+    </div>
+  {% endif %}
+
+  <div class="space-y-5">
+    {% include "partials/_field.html" with field=form.property %}
+    {% include "partials/_field.html" with field=form.renter_name %}
+    {% include "partials/_field.html" with field=form.renter_phone %}
+    {% include "partials/_field.html" with field=form.member %}
+
+    <div class="grid gap-5 sm:grid-cols-2">
+      {% include "partials/_field.html" with field=form.start_date %}
+      {% include "partials/_field.html" with field=form.end_date %}
+    </div>
+
+    {% comment %}Times are only asked for by an hourly property; the script
+    below shows this row when one is picked and hides it otherwise.{% endcomment %}
+    <div class="grid gap-5 sm:grid-cols-2" data-time-row>
+      {% include "partials/_field.html" with field=form.start_time %}
+      {% include "partials/_field.html" with field=form.end_time %}
+    </div>
+
+    {% include "partials/_field.html" with field=form.purpose %}
+
+    <div class="field">
+      <label class="field-label" for="{{ form.rent_amount.id_for_label }}">
+        {{ form.rent_amount.label }} <span class="text-sand-500">({{ org.currency_symbol }})</span>
+      </label>
+      {{ form.rent_amount }}
+      <p class="field-help" data-quote>{{ form.rent_amount.help_text }}</p>
+      {% if form.rent_amount.errors %}<p class="field-error"><span>⚠</span><span>{{ form.rent_amount.errors|striptags }}</span></p>{% endif %}
+    </div>
+
+    {% include "partials/_field.html" with field=form.notes %}
+  </div>
+
+  <div class="mt-7 flex flex-wrap gap-3 border-t border-sand-100 pt-5">
+    <button type="submit" class="btn btn-primary">Save booking</button>
+    <a href="{% url 'rentals:list' %}" class="btn btn-ghost">Cancel</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Work the rent out as the booking is filled in, and show the sum it came
+  // from. Nothing here is load-bearing: `BookingForm.clean()` does the same
+  // maths again on save, so a browser without JavaScript still gets the right
+  // amount — it just types the dates first.
+  (function () {
+    const property = document.querySelector("select[name='property']");
+    const amount = document.querySelector("[data-amount-input]");
+    const quote = document.querySelector("[data-quote]");
+    const timeRow = document.querySelector("[data-time-row]");
+    const startDate = document.querySelector("[data-start-date]");
+    const endDate = document.querySelector("[data-end-date]");
+    const startTime = document.querySelector("[data-start-time]");
+    const endTime = document.querySelector("[data-end-time]");
+    if (!property || !amount || !quote) return;
+
+    const symbol = "{{ org.currency_symbol }}";
+    const hint = quote.textContent;
+    // Set once the amount is typed over, so a discount is never overwritten by
+    // the calculator on the next change elsewhere in the form.
+    let edited = {% if mode == "edit" %}true{% else %}false{% endif %};
+    amount.addEventListener("input", () => { edited = true; });
+
+    const show = (v) => symbol + v.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+
+    function units(basis) {
+      if (basis === "use") return 1;
+      if (!startDate.value || !endDate.value) return null;
+      const from = new Date(startDate.value), to = new Date(endDate.value);
+      if (to < from) return null;
+      if (basis === "day") return Math.round((to - from) / 86400000) + 1;
+      if (basis === "hour") {
+        if (!startTime.value || !endTime.value) return null;
+        const mins = (new Date(`${endDate.value}T${endTime.value}`)
+                    - new Date(`${startDate.value}T${startTime.value}`)) / 60000;
+        return mins > 0 ? Math.ceil(mins / 60) : null;   // part hours count as full
+      }
+      return null;
+    }
+
+    function draw() {
+      const picked = property.selectedOptions[0];
+      const rate = parseFloat(picked?.dataset.rate || "0");
+      const basis = picked?.dataset.basis;
+      const noun = picked?.dataset.noun || "booking";
+
+      timeRow.hidden = basis !== "hour";
+
+      if (!picked?.value) { quote.textContent = hint; return; }
+      if (!rate) {
+        quote.textContent = "This property has no rate set — type what it costs.";
+        return;
+      }
+      const n = units(basis);
+      if (n === null) {
+        quote.textContent = basis === "hour"
+          ? `${show(rate)} per hour — add the times and the rent fills in.`
+          : `${show(rate)} per ${noun} — pick the dates and the rent fills in.`;
+        return;
+      }
+      const total = rate * n;
+      const plural = noun + (n === 1 ? "" : "s");
+      quote.textContent = `${show(rate)} × ${n} ${plural} = ${show(total)}`;
+      if (!edited) amount.value = total.toFixed(2);
+    }
+
+    [property, startDate, endDate, startTime, endTime]
+      .forEach((el) => el && el.addEventListener("change", draw));
+    draw();
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load faith %}
+{% block title %}Notices · {{ org.name }}{% endblock %}
+
+{% block page_icon %}📢{% endblock %}
+{% block page_title %}Notices{% native_text org org.script.nav.notices %}{% endblock %}
+{% block page_sub %}Announcements for your {{ org.preset.community_term }}{% endblock %}
+{% block page_actions %}
+  {% if caps.manage_notices %}<a href="{% url 'notices:add' %}" class="btn btn-primary">＋ Post notice</a>{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if notices %}
+  <div class="grid animate-rise gap-4 sm:grid-cols-2">
+    {% for n in notices %}
+      <a href="{% url 'notices:detail' n.pk %}"
+         class="card-link card-pad flex flex-col {% if n.is_pinned %}border-gold-200 bg-gradient-to-b from-gold-50/60 to-white{% endif %}">
+        <div class="flex items-start gap-3">
+          <span class="emblem emblem-sm">{% if n.is_pinned %}📌{% else %}📄{% endif %}</span>
+          <h2 class="min-w-0 flex-1 pt-1.5 font-display font-bold leading-snug">{{ n.title }}</h2>
+        </div>
+        <p class="mt-3 line-clamp-3 flex-1 text-sm leading-relaxed text-sand-600">{{ n.body|truncatewords:36 }}</p>
+        <p class="mt-4 flex items-center gap-2 text-xs text-sand-500">
+          {% if n.is_pinned %}<span class="badge badge-gold">Pinned</span>{% endif %}
+          <span>{{ n.created_at|date:"j M Y" }}</span>
+          {% if n.author %}<span>· {{ n.author.get_full_name|default:n.author.username }}</span>{% endif %}
+        </p>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty">
+    <span class="text-4xl">📢</span>
+    <p class="mt-3 font-semibold">No notices yet</p>
+    <p class="mt-1 max-w-sm text-sm text-sand-600">
+      This is the board everyone signed in can read — timings, appeals, meeting
+      announcements. Pin the important ones to keep them on top.
+    </p>
+    {% if caps.manage_notices %}<a href="{% url 'notices:add' %}" class="btn btn-primary mt-5">＋ Post the first notice</a>{% endif %}
+  </div>
+{% endif %}
+{% endblock %}

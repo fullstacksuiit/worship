@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Remove property? · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-md px-4 py-12 sm:py-16{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% block content %}
+{% url 'rentals:property_list' as cancel_url %}
+{% include "partials/_confirm_card.html" with cancel_url=cancel_url heading="Remove “"|add:property.name|add:"”?" note="A property with bookings can't be deleted. If it has history, edit it and switch it to inactive instead — it then stops appearing on new bookings." %}
+{% endblock %}

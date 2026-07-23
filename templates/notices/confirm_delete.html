@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Remove notice? · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-md px-4 py-12 sm:py-16{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% block content %}
+{% url 'notices:detail' notice.pk as cancel_url %}
+{% include "partials/_confirm_card.html" with cancel_url=cancel_url heading="Remove “"|add:notice.title|add:"”?" note="It disappears from the board for everyone." %}
+{% endblock %}

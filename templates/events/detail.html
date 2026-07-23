@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}{{ event.title }} · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-3xl px-4 pb-28 pt-6 sm:px-6 lg:pb-16 lg:pt-9{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% block content %}
+<a href="{% url 'events:list' %}" class="back-link">← Back to events</a>
+
+<div class="card animate-rise mt-3 overflow-hidden">
+  <div class="border-b border-sand-100 bg-gradient-to-b from-sand-50 to-white px-5 py-6 sm:px-6">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="flex min-w-0 items-start gap-4">
+        <span class="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl border border-sand-200/80 bg-white shadow-soft">
+          <span class="text-[0.65rem] font-bold uppercase tracking-wide text-clay-700">{{ event.start|date:"M" }}</span>
+          <span class="text-2xl font-bold leading-none">{{ event.start|date:"d" }}</span>
+        </span>
+        <div class="min-w-0">
+          <h1 class="text-2xl font-bold">{{ event.title }}</h1>
+          <p class="mt-1 text-sm text-sand-600">
+            🕐 {{ event.start|date:"l, j M Y · g:i A" }}{% if event.end %} – {{ event.end|date:"g:i A" }}{% endif %}
+          </p>
+          <p class="mt-2 flex flex-wrap items-center gap-2 text-sm text-sand-600">
+            {% if event.category %}<span class="badge badge-neutral">{{ event.category }}</span>{% endif %}
+            {% if event.location %}<span>📍 {{ event.location }}</span>{% endif %}
+            {% if event.is_past %}<span class="badge badge-neutral">finished</span>{% endif %}
+          </p>
+        </div>
+      </div>
+      {% if caps.manage_events %}
+        <div class="flex gap-2">
+          <a href="{% url 'events:edit' event.pk %}" class="btn btn-sm btn-ghost">✏️ Edit</a>
+          <a href="{% url 'events:delete' event.pk %}" class="btn btn-sm btn-danger-ghost">Delete</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if event.description %}
+    <div class="p-5 sm:p-6">
+      <p class="whitespace-pre-line text-sm leading-relaxed text-sand-800">{{ event.description }}</p>
+    </div>
+  {% endif %}
+</div>
+
+<div class="card card-pad mt-5">
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+    <h2 class="section-title !mb-0"><span>✅</span> Attendance</h2>
+    <span class="badge badge-accent">{{ attending_ids|length }} of {{ members|length }} present</span>
+  </div>
+
+  {% if members %}
+    {% if caps.manage_events %}
+      <form method="post" action="{% url 'events:attendance' event.pk %}" class="field">
+        {% csrf_token %}
+        <p class="mb-3 text-sm text-sand-600">Tick everyone who came, then save.</p>
+        <div class="grid gap-2 sm:grid-cols-2">
+          {% for m in members %}
+            <label class="field-toggle">
+              <input type="checkbox" name="attendees" value="{{ m.pk }}" {% if m.id in attending_ids %}checked{% endif %}>
+              <span class="flex-1 truncate">{{ m.name }}</span>
+            </label>
+          {% endfor %}
+        </div>
+        <button type="submit" class="btn btn-primary mt-5">Save attendance</button>
+      </form>
+    {% elif attending_ids %}
+      <div class="grid gap-2 sm:grid-cols-2">
+        {% for m in members %}{% if m.id in attending_ids %}
+          <div class="flex items-center gap-2.5 rounded-xl border border-sand-200 bg-sand-50/60 px-3.5 py-2.5 text-sm">
+            <span>✅</span><span class="truncate">{{ m.name }}</span>
+          </div>
+        {% endif %}{% endfor %}
+      </div>
+    {% else %}
+      <p class="text-sm text-sand-600">No attendance was recorded for this one.</p>
+    {% endif %}
+  {% else %}
+    <div class="panel text-sm text-sand-600">
+      Add your {{ org.preset.community_term|lower }} first and you'll be able to tick off attendance here.
+      <a href="{% url 'members:add' %}" class="link">Add a {{ org.preset.member_term|lower }} →</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

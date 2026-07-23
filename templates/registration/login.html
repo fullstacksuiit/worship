@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Sign in · {{ org.name|default:"Worship" }}{% endblock %}
+{% block main_class %}mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-4 py-12{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% block content %}
+<div class="animate-rise">
+  <div class="mb-8 text-center">
+    <div class="emblem mx-auto h-20 w-20 rounded-3xl text-4xl">🏛️</div>
+    <h1 class="mt-5 text-2xl font-bold">Welcome back</h1>
+    <p class="mt-1.5 text-sand-600">Sign in to your place of worship</p>
+  </div>
+
+  <form method="post" class="card card-pad">
+    {% csrf_token %}
+    {% if form.errors %}
+      <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+        <span>⚠️</span><span>That username and password don't match. Please try again.</span>
+      </div>
+    {% endif %}
+    <div class="space-y-5">
+      {% for field in form %}{% include "partials/_field.html" %}{% endfor %}
+    </div>
+    <button type="submit" class="btn btn-primary btn-lg mt-7 w-full">Sign in</button>
+  </form>
+
+  <div class="mt-6 rounded-2xl border border-dashed border-sand-300 bg-white/60 px-5 py-4 text-center">
+    <p class="text-sm font-semibold text-sand-800">New here?</p>
+    <p class="mt-1 text-sm text-sand-600">
+      Register your masjid, mandir, church or gurudwara — it takes one screen.
+    </p>
+    <a href="{% url 'core:signup' %}" class="btn btn-ghost btn-sm mt-3">Register your place →</a>
+  </div>
+
+  <p class="mt-5 text-center text-xs text-sand-500">
+    Forgotten your password? An admin of your place can set a new one for you.
+  </p>
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Delete {{ category.name }}? · {{ org.name }}{% endblock %}
+{% block main_class %}mx-auto w-full max-w-md px-4 py-12 sm:py-16{% endblock %}
+{% block page_header %}{% endblock %}
+
+{% block content %}
+{% url 'core:category_list' as cancel_url %}
+{% include "partials/_confirm_card.html" with cancel_url=cancel_url confirm_label="Yes, delete it" heading="Delete “"|add:category.name|add:"”?" note="Nothing is filed under it, so nothing else changes. If you type the word again later it simply comes back." %}
+{% endblock %}

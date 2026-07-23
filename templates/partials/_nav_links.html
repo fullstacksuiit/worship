@@ -1,0 +1,20 @@
+{% comment %}
+The module links. Shared by the desktop sidebar and the mobile drawer.
+Where the place has a second language, each link says its name twice — English
+on top, the place's own word under it — so either reader finds the same screen.
+{% endcomment %}
+{% for item in nav %}
+  <a href="{% url item.url %}"
+     class="nav-link {% if item.active %}nav-link-on{% endif %}"
+     {% if item.active %}aria-current="page"{% endif %}>
+    <span class="emblem emblem-sm">{{ item.icon }}</span>
+    <span class="min-w-0 flex-1">
+      <span class="block truncate">{{ item.label }}</span>
+      {% if item.native_label %}
+        <span class="native native-block text-sand-400"
+              lang="{{ org.script.code }}" dir="{{ org.script.direction }}">{{ item.native_label }}</span>
+      {% endif %}
+    </span>
+    {% if item.active %}<span class="h-1.5 w-1.5 rounded-full bg-clay-500"></span>{% endif %}
+  </a>
+{% endfor %}

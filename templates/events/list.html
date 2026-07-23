@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load faith %}
+{% block title %}{{ org.preset.event_term }} & Events · {{ org.name }}{% endblock %}
+
+{% block page_icon %}📅{% endblock %}
+{% block page_title %}{{ org.preset.event_term }} &amp; Events{% native_text org org.script.nav.events %}{% endblock %}
+{% block page_sub %}Schedule programs and keep a record of who came{% endblock %}
+{% block page_actions %}
+  {% if caps.manage_events %}<a href="{% url 'events:add' %}" class="btn btn-primary">＋ New event</a>{% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="animate-rise">
+  <h2 class="section-title"><span>⏳</span> Upcoming</h2>
+  {% if upcoming %}
+    <div class="space-y-2.5">
+      {% for e in upcoming %}{% include "events/_row.html" with e=e %}{% endfor %}
+    </div>
+  {% else %}
+    <div class="empty py-10">
+      <span class="text-4xl">📅</span>
+      <p class="mt-3 font-semibold">Nothing scheduled yet</p>
+      <p class="mt-1 max-w-sm text-sm text-sand-600">
+        Put your next {{ org.preset.event_term|lower }} on the calendar and you can tick off
+        attendance on the day.
+      </p>
+      {% if caps.manage_events %}<a href="{% url 'events:add' %}" class="btn btn-primary mt-5">＋ Schedule one</a>{% endif %}
+    </div>
+  {% endif %}
+</section>
+
+{% if past %}
+  <section class="mt-9">
+    <h2 class="section-title text-sand-600"><span>🗂️</span> Past</h2>
+    <div class="space-y-2.5 opacity-90">
+      {% for e in past %}{% include "events/_row.html" with e=e %}{% endfor %}
+    </div>
+  </section>
+{% endif %}
+{% endblock %}
